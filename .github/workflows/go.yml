@@ -19,4 +19,4 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: ./build.sh
+      run: bash ./build.sh
