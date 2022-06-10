@@ -82,7 +82,10 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 			case 'd':
 				l.pages.ShowPage("delete")
 			case '+':
-				fallthrough
+			        now := time.Now()
+				l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
+				l.pages.ShowPage("add")
+				return nil
 			case 'a':
 				l.pages.ShowPage("archive")
 				return nil
