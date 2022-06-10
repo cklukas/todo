@@ -1,9 +1,12 @@
-package main
+package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -21,15 +24,29 @@ type Lanes struct {
 }
 
 func NewLanes(content *Content, app *tview.Application) *Lanes {
-	l := &Lanes{content, make([]*tview.List, content.GetNumLanes()), 0, tview.NewPages(), app, false, NewModalInput(), NewModalInput()}
+	l := &Lanes{content, make([]*tview.List, content.GetNumLanes()), 0, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task")}
 
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
-		l.lanes[i].ShowSecondaryText(false).SetBorder(true)
+		l.lanes[i].ShowSecondaryText(true).SetBorder(true)
 		l.lanes[i].SetTitle(l.content.GetLaneTitle(i))
 		l.lanes[i].SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Key() {
+			case tcell.KeyInsert:
+				now := time.Now()
+				l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
+				l.pages.ShowPage("add")
+				return nil
+			case tcell.KeyDelete:
+				l.pages.ShowPage("delete")
+				return nil
+			case tcell.KeyTab:
+				l.incActive()
+				return nil
+			case tcell.KeyBacktab:
+				l.decActive()
+				return nil
 			case tcell.KeyUp:
 				if l.inselect {
 					l.up()
@@ -58,14 +75,20 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 			switch event.Rune() {
 			case 'q':
 				l.pages.ShowPage("quit")
+			case 'h':
+				fallthrough
+			case '?':
+				l.pages.ShowPage("help")
 			case 'd':
 				l.pages.ShowPage("delete")
+			case '+':
+				fallthrough
 			case 'a':
-				l.add.SetValue("")
-				l.pages.ShowPage("add")
+				l.pages.ShowPage("archive")
+				return nil
 			case 'e':
 				if item := l.currentItem(); item != nil {
-					l.edit.SetValue(item.Title)
+					l.edit.SetValue(item.Title, item.Secondary)
 					l.pages.ShowPage("edit")
 				}
 			case 'n':
@@ -74,16 +97,22 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 			return event
 		})
 		l.lanes[i].SetSelectedFunc(func(w int, x string, y string, z rune) {
-			l.selected()
+			if l.inselect {
+				l.selected()
+				content.Save()
+			} else {
+				l.selected()
+			}
 		})
 		l.lanes[i].SetDoneFunc(func() {
 			// Cancel select on Done (escape)
 			if l.inselect {
 				l.selected()
+				content.Save()
 			}
 		})
 		for _, item := range l.content.GetLaneItems(i) {
-			l.lanes[i].AddItem(item.Title, "", 0, nil)
+			l.lanes[i].AddItem(item.Title, item.Secondary, 0, nil)
 		}
 		flex.AddItem(l.lanes[i], 0, 1, i == 0)
 	}
@@ -100,36 +129,77 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 		})
 	l.pages.AddPage("quit", quit, false, false)
 
+	// help := tview.NewModal().
+	help := tview.NewModal()
+	help = help.
+		SetText("- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, q - quit").
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			l.pages.HidePage("help")
+			l.setActive()
+		})
+
+	help.SetTitle(" About TODO ")
+
+	l.pages.AddPage("help", help, false, false)
+
 	delete := tview.NewModal().
-		SetText("Are you sure?").
+		SetTitle(" Delete Task ").
+		SetText("About to delete selected task. Continue?").
 		AddButtons([]string{"Yes", "No"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Yes" {
 				item := l.lanes[l.active].GetCurrentItem()
 				l.content.DelItem(l.active, item)
 				l.redraw(l.active, item)
+				content.Save()
 			}
 			l.pages.HidePage("delete")
 			l.setActive()
 		})
 	l.pages.AddPage("delete", delete, false, false)
 
-	l.add.SetDoneFunc(func(text string, success bool) {
+	archive := tview.NewModal().
+		SetTitle(" Archive Task ").
+		SetText("About to archive selected task. Continue?").
+		AddButtons([]string{"Yes", "No"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Yes" {
+				item := l.lanes[l.active].GetCurrentItem()
+				err := l.content.ArchiveItem(l.active, item)
+				if err != nil {
+					app.Stop()
+					log.Fatal(err)
+				}
+				l.redraw(l.active, item)
+				content.Save()
+			}
+			l.pages.HidePage("archive")
+			l.setActive()
+		})
+	l.pages.AddPage("archive", archive, false, false)
+
+	l.add.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {
 			item := l.lanes[l.active].GetCurrentItem()
-			l.content.AddItem(l.active, item, text)
+			if len(text) == 0 {
+				text = "(empty)"
+			}
+			l.content.AddItem(l.active, item, text, secondary)
 			l.redraw(l.active, item)
+			content.Save()
 		}
 		l.pages.HidePage("add")
 		l.setActive()
 	})
 	l.pages.AddPage("add", l.add, false, false)
 
-	l.edit.SetDoneFunc(func(text string, success bool) {
+	l.edit.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {
 			item := l.lanes[l.active].GetCurrentItem()
 			itemVal := l.currentItem()
 			itemVal.Title = text
+			itemVal.Secondary = secondary
 			l.redraw(l.active, item)
 		}
 		l.pages.HidePage("edit")
@@ -144,7 +214,7 @@ func (l *Lanes) selected() {
 	if l.inselect {
 		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
 	} else {
-		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorGreen)
+		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorBlue)
 	}
 	l.inselect = !l.inselect
 }
@@ -152,11 +222,20 @@ func (l *Lanes) selected() {
 func (l *Lanes) redraw(lane, active int) {
 	l.lanes[lane].Clear()
 	for _, item := range l.content.GetLaneItems(lane) {
-		l.lanes[lane].AddItem(item.Title, "", 0, nil)
+		l.lanes[lane].AddItem(item.Title, item.Secondary, 0, nil)
 	}
 	num := l.lanes[lane].GetItemCount()
 	if num > 0 {
 		l.lanes[lane].SetCurrentItem(normPos(active, num))
+	}
+	l.lanes[lane].SetTitle(l.content.GetLaneTitle(lane))
+}
+
+func (l *Lanes) RedrawAllLanes() {
+	for idx := range l.lanes {
+		currentPos := l.lanes[idx].GetCurrentItem()
+		newPos := normPos(currentPos, l.lanes[idx].GetItemCount())
+		l.redraw(idx, newPos)
 	}
 }
 
@@ -213,7 +292,9 @@ func normPos(pos, length int) int {
 	for pos < 0 {
 		pos += length
 	}
-	pos %= length
+	if length > 0 {
+		pos %= length
+	}
 	return pos
 }
 
@@ -234,7 +315,7 @@ func (l *Lanes) currentItem() *Item {
 func (l *Lanes) editNote() {
 	item := l.currentItem()
 	if item != nil {
-		tmp, err := ioutil.TempFile("", "toukan")
+		tmp, err := ioutil.TempFile("", "todo_temp_note_")
 		if err == nil {
 			name := tmp.Name()
 			defer os.Remove(name)
