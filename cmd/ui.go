@@ -296,13 +296,17 @@ func (l *Lanes) right() {
 }
 
 func (l *Lanes) decActive() {
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorGray)
 	l.active--
 	l.setActive()
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
 }
 
 func (l *Lanes) incActive() {
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorGray)
 	l.active++
 	l.setActive()
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
 }
 
 func normPos(pos, length int) int {

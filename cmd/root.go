@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +64,13 @@ func main(cmd *cobra.Command, args []string) error {
 	app := tview.NewApplication()
 	// app.EnableMouse(true) // modal dialogs are not handled well
 	lanes := NewLanes(content, app)
+	for idx := range lanes.lanes {
+		if lanes.active == idx {
+			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorWhite)
+		} else {
+			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorGray)
+		}
+	}
 
 	app.SetRoot(lanes.GetUi(), true)
 
