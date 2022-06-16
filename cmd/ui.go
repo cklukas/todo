@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -82,7 +83,7 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 			case 'd':
 				l.pages.ShowPage("delete")
 			case '+':
-			        now := time.Now()
+				now := time.Now()
 				l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
 				l.pages.ShowPage("add")
 				return nil
@@ -95,7 +96,14 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 					l.pages.ShowPage("edit")
 				}
 			case 'n':
-				app.Suspend(l.editNote)
+				if runtime.GOOS == "windows" {
+					l.pages.ShowPage("wait")
+					app.ForceDraw()
+					l.editNote()
+					l.pages.HidePage("wait")
+				} else {
+					app.Suspend(l.editNote)
+				}
 			}
 			return event
 		})
@@ -181,6 +189,12 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 			l.setActive()
 		})
 	l.pages.AddPage("archive", archive, false, false)
+
+	waitPage := tview.NewModal().
+		SetTitle(" Editing Note ").
+		SetText("When finished editing the note, save the changes and close Notepad. The item note text will be updated and you can continue to use the ToDo app.")
+
+	l.pages.AddPage("wait", waitPage, false, false)
 
 	l.add.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {
@@ -324,15 +338,34 @@ func (l *Lanes) editNote() {
 			defer os.Remove(name)
 			tmp.Write([]byte(item.Note))
 			tmp.Close()
-			cmd := exec.Command("vim", name)
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err = cmd.Run()
-			if err == nil {
-				note_raw, err := ioutil.ReadFile(name)
+			var cmd *exec.Cmd
+			if runtime.GOOS == "windows" {
+				cmd = exec.Command("notepad", name)
+				err = cmd.Start()
+				if err != nil {
+					log.Fatal(err)
+				}
+				err = cmd.Wait()
+				if err != nil {
+					log.Fatal(err)
+				}
 				if err == nil {
-					item.Note = string(note_raw)
+					note_raw, err := ioutil.ReadFile(name)
+					if err == nil {
+						item.Note = string(note_raw)
+					}
+				}
+			} else {
+				cmd = exec.Command("vim", name)
+				cmd.Stdin = os.Stdin
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err = cmd.Run()
+				if err == nil {
+					note_raw, err := ioutil.ReadFile(name)
+					if err == nil {
+						item.Note = string(note_raw)
+					}
 				}
 			}
 		}

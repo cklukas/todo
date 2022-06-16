@@ -13,7 +13,7 @@ A simple Kanban board for your terminal.
 # Compatibility
 
 * Linux (release `todo` executable), requires installed `vim` editor for editing longer todo item note text (hotkey 'n')
-* Windows (release `todo.exe`), editing notes is currently not working (tries to start `vim`, which is likely not available)
+* Windows (release `todo.exe`), editing notes (hotkey 'n') is performed in Notepad
 
 # Screenshots
 
