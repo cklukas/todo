@@ -66,9 +66,10 @@ func main(cmd *cobra.Command, args []string) error {
 	lanes := NewLanes(content, app)
 	for idx := range lanes.lanes {
 		if lanes.active == idx {
-			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorWhite)
+			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorLightBlue)
+			lanes.lanes[idx].SetSelectedTextColor(tcell.ColorBlack)
 		} else {
-			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorGray)
+			lanes.lanes[idx].SetSelectedStyle(tcell.StyleDefault)
 		}
 	}
 

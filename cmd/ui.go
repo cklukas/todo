@@ -230,8 +230,10 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 func (l *Lanes) selected() {
 	if l.inselect {
 		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
+		l.lanes[l.active].SetSelectedTextColor(tcell.ColorBlack)
 	} else {
-		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorBlue)
+		l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorNavy)
+		l.lanes[l.active].SetSelectedTextColor(tcell.ColorWhite)
 	}
 	l.inselect = !l.inselect
 }
@@ -296,17 +298,19 @@ func (l *Lanes) right() {
 }
 
 func (l *Lanes) decActive() {
-	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorGray)
+	l.lanes[l.active].SetSelectedStyle(tcell.StyleDefault)
 	l.active--
 	l.setActive()
-	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorLightBlue)
+	l.lanes[l.active].SetSelectedTextColor(tcell.ColorBlack)
 }
 
 func (l *Lanes) incActive() {
-	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorGray)
+	l.lanes[l.active].SetSelectedStyle(tcell.StyleDefault)
 	l.active++
 	l.setActive()
-	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorWhite)
+	l.lanes[l.active].SetSelectedBackgroundColor(tcell.ColorLightBlue)
+	l.lanes[l.active].SetSelectedTextColor(tcell.ColorBlack)
 }
 
 func normPos(pos, length int) int {

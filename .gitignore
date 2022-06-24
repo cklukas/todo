@@ -1,2 +1,4 @@
 /todo
 /todo.exe
+cmd/ui.go
+/__debug_bin
