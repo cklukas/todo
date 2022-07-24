@@ -28,4 +28,5 @@ jobs:
       with:
         files: |
           todo
+          todo_mac_arm64
           todo.exe
