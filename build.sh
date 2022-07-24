@@ -4,6 +4,7 @@ echo "Build command line tool with version $VERSION"
 rm -f ./todo ./todo.exe
 go mod tidy
 CGO_ENABLED=0 go build -o todo -ldflags="-X 'github.com/cklukas/todo/cmd.AppVersion=$VERSION'" && \
+GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o todo_mac_arm64 -ldflags="-X 'github.com/cklukas/todo/cmd.AppVersion=$VERSION'" && \
 GOOS=windows GOARCH=amd64 go build -o todo.exe -ldflags="-X 'github.com/cklukas/todo/cmd.AppVersion=$VERSION'" && \
 chmod +x ./todo && \
 ./todo version && \
