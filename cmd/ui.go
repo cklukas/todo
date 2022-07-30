@@ -22,10 +22,65 @@ type Lanes struct {
 	inselect bool
 	add      *ModalInput
 	edit     *ModalInput
+
+	bMoveHelp *tview.Button
+
+	// CmdAddTask  func()
+	// CmdEditTask func()
+	// CmdNote     func()
+	// CmdArchive  func()
+	// CmdExit     func()
+}
+
+func (l *Lanes) CmdAbout() {
+	l.setActive()
+	l.pages.ShowPage("help")
+}
+
+func (l *Lanes) CmdExit() {
+	l.setActive()
+	l.pages.ShowPage("quit")
+}
+
+func (l *Lanes) CmdAddTask() {
+	l.setActive()
+	now := time.Now()
+	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
+	l.pages.ShowPage("add")
+}
+
+func (l *Lanes) CmdEditTask() {
+	l.setActive()
+	if item := l.currentItem(); item != nil {
+		l.edit.SetValue(item.Title, item.Secondary)
+		l.pages.ShowPage("edit")
+	}
+}
+
+func (l *Lanes) CmdEditNote() {
+	l.setActive()
+	if runtime.GOOS == "windows" {
+		l.pages.ShowPage("wait")
+		l.app.ForceDraw()
+		l.editNote()
+		l.pages.HidePage("wait")
+	} else {
+		l.app.Suspend(l.editNote)
+	}
+}
+
+func (l *Lanes) CmdArchiveNote() {
+	l.setActive()
+	l.pages.ShowPage("archive")
+}
+
+func (l *Lanes) CmdSelectNote() {
+	l.setActive()
+	l.selected()
 }
 
 func NewLanes(content *Content, app *tview.Application) *Lanes {
-	l := &Lanes{content, make([]*tview.List, content.GetNumLanes()), 0, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task")}
+	l := &Lanes{content, make([]*tview.List, content.GetNumLanes()), 0, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task"), nil}
 
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
@@ -34,10 +89,25 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 		l.lanes[i].SetTitle(l.content.GetLaneTitle(i))
 		l.lanes[i].SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Key() {
+			case tcell.KeyF10:
+				l.CmdExit()
+				return nil
+			case tcell.KeyF6:
+				l.CmdSelectNote()
+				return nil
+			case tcell.KeyF5:
+				l.CmdArchiveNote()
+				return nil
+			case tcell.KeyF4:
+				l.CmdEditNote()
+				return nil
+			case tcell.KeyF3:
+				l.CmdEditTask()
+				return nil
+			case tcell.KeyF2:
+				fallthrough
 			case tcell.KeyInsert:
-				now := time.Now()
-				l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
-				l.pages.ShowPage("add")
+				l.CmdAddTask()
 				return nil
 			case tcell.KeyDelete:
 				l.pages.ShowPage("delete")
@@ -72,38 +142,29 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 					l.incActive()
 				}
 				return nil
+			case tcell.KeyF1:
+				l.CmdAbout()
+				return nil
 			}
 			switch event.Rune() {
 			case 'q':
-				l.pages.ShowPage("quit")
+				l.CmdExit()
 			case 'h':
 				fallthrough
 			case '?':
-				l.pages.ShowPage("help")
+				l.CmdAbout()
 			case 'd':
 				l.pages.ShowPage("delete")
 			case '+':
-				now := time.Now()
-				l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
-				l.pages.ShowPage("add")
+				l.CmdAddTask()
 				return nil
 			case 'a':
-				l.pages.ShowPage("archive")
+				l.CmdArchiveNote()
 				return nil
 			case 'e':
-				if item := l.currentItem(); item != nil {
-					l.edit.SetValue(item.Title, item.Secondary)
-					l.pages.ShowPage("edit")
-				}
+				l.CmdEditTask()
 			case 'n':
-				if runtime.GOOS == "windows" {
-					l.pages.ShowPage("wait")
-					app.ForceDraw()
-					l.editNote()
-					l.pages.HidePage("wait")
-				} else {
-					app.Suspend(l.editNote)
-				}
+				l.CmdEditNote()
 			}
 			return event
 		})
@@ -236,6 +297,11 @@ func (l *Lanes) selected() {
 		l.lanes[l.active].SetSelectedTextColor(tcell.ColorWhite)
 	}
 	l.inselect = !l.inselect
+	if l.inselect {
+		l.bMoveHelp.SetLabel("[blue::-]↔ ↕ [black::b]Use Arrow Keys to Move Task")
+	} else {
+		l.bMoveHelp.SetLabel("")
+	}
 }
 
 func (l *Lanes) redraw(lane, active int) {

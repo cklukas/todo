@@ -62,7 +62,6 @@ func main(cmd *cobra.Command, args []string) error {
 	content.Save()
 
 	app := tview.NewApplication()
-	// app.EnableMouse(true) // modal dialogs are not handled well
 	lanes := NewLanes(content, app)
 	for idx := range lanes.lanes {
 		if lanes.active == idx {
@@ -73,7 +72,65 @@ func main(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	app.SetRoot(lanes.GetUi(), true)
+	bAbout := tview.NewButton("[brown::-]F1 [black::-]About")
+	bAbout.SetBackgroundColor(tcell.ColorLightGray)
+	bAbout.SetSelectedFunc(lanes.CmdAbout)
+
+	bAddToDo := tview.NewButton("[red::-]F2 [black::-]Add Task")
+	bAddToDo.SetBackgroundColor(tcell.ColorLightGray)
+	bAddToDo.SetSelectedFunc(lanes.CmdAddTask)
+
+	bEditToDo := tview.NewButton("[red::-]F3 [black::-]Edit")
+	bEditToDo.SetBackgroundColor(tcell.ColorLightGray)
+	bEditToDo.SetSelectedFunc(lanes.CmdEditTask)
+
+	bNoteToDo := tview.NewButton("[red::-]F4 [black::-]Note")
+	bNoteToDo.SetBackgroundColor(tcell.ColorLightGray)
+	bNoteToDo.SetSelectedFunc(lanes.CmdEditNote)
+
+	bArchiveToDo := tview.NewButton("[red::-]F5 [black::-]Archive")
+	bArchiveToDo.SetBackgroundColor(tcell.ColorLightGray)
+	bArchiveToDo.SetSelectedFunc(lanes.CmdArchiveNote)
+
+	bSelectToDo := tview.NewButton("[red::-]F6 [black::-]Select")
+	bSelectToDo.SetBackgroundColor(tcell.ColorLightGray)
+	bSelectToDo.SetSelectedFunc(lanes.CmdSelectNote)
+
+	// bAddColumn := tview.NewButton("[darkblue::-]F8 [black::-]Add Column")
+	// bAddColumn.SetBackgroundColor(tcell.ColorLightGray)
+
+	// bDeleteColumn := tview.NewButton("[darkblue::-]F8 [black::-]Delete")
+	// bDeleteColumn.SetBackgroundColor(tcell.ColorLightGray)
+
+	// bRenameColumn := tview.NewButton("[darkblue::-]F9 [black::-]Rename")
+	// bRenameColumn.SetBackgroundColor(tcell.ColorLightGray)
+
+	bExit := tview.NewButton("[brown::-]F10 [black::-]Exit")
+	bExit.SetBackgroundColor(tcell.ColorLightGray)
+	bExit.SetSelectedFunc(lanes.CmdExit)
+
+	bMoveHelp := tview.NewButton("")
+	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
+	lanes.bMoveHelp = bMoveHelp
+
+	info := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(bAbout, 10, 1, false).
+		AddItem(bAddToDo, 13, 1, false).
+		AddItem(bEditToDo, 9, 1, false).
+		AddItem(bNoteToDo, 9, 1, false).
+		AddItem(bArchiveToDo, 13, 1, false).
+		AddItem(bSelectToDo, 10, 1, false).
+		// AddItem(bAddColumn, 15, 1, false).
+		// AddItem(bDeleteColumn, 10, 1, false).
+		// AddItem(bRenameColumn, 10, 1, false).
+		AddItem(bExit, 10, 1, false).
+		AddItem(bMoveHelp, 38, 1, false)
+
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(lanes.GetUi(), 0, 1, true).
+		AddItem(info, 1, 1, false)
+	app.SetRoot(layout, true).EnableMouse(true)
 
 	// watch todo.json for changes
 	if _, err := os.Stat(fname); err == nil {
