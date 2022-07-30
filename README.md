@@ -9,11 +9,13 @@ A simple Kanban board for your terminal.
 * Allows input of topic and second description line
 * Provides function to view/edit a longer note for each item in vim
 * Use [red], [blue] etc. to colorize your item text
+* New: Hotkeys F1..F10 are shown in status bar
 
 ## Compatibility
 
 * Linux (release `todo` executable), requires installed `vim` editor for editing longer todo item note text (hotkey 'n')
 * Windows (release `todo.exe`), editing notes (hotkey 'n') is performed in Notepad
+* macOS (arm64)
 
 ## Screenshots
 
