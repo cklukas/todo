@@ -5,7 +5,7 @@ A simple Kanban board for your terminal.
 * Stores data in a simple JSON document in `$HOME/.todo/todo.json`
 * Makes a daily backup of the data in `$HOME/.todo/backup/`
 * Contains a function to archive an todo item in `$HOME/.todo/archive`
-* If a non-default mode is used (see below), the files for that mode (`todo.json`, `backup`, `archive`) are saved under `$home/.todo/mode/[mode]`
+* If a non-default mode is used (see below), the files and folders for that mode (`todo.json`, `backup`, `archive`) are saved under `$home/.todo/mode/[mode]`
 
 * Allows input of topic and second description line
 * Provides function to view/edit a longer note for each item in vim
