@@ -34,6 +34,13 @@ func main(cmd *cobra.Command, args []string) error {
 	}
 
 	todoDir := ".todo"
+	mode := "main"
+
+	if len(args) == 1 {
+		todoDir = path.Join(todoDir, "mode", args[0])
+		mode = args[0]
+	}
+
 	archiveFolder := path.Join(usr.HomeDir, todoDir, "archive")
 	archiveDir, err := CreateDir(archiveFolder)
 	if err != nil {
@@ -62,7 +69,8 @@ func main(cmd *cobra.Command, args []string) error {
 	content.Save()
 
 	app := tview.NewApplication()
-	lanes := NewLanes(content, app)
+	lanes := NewLanes(content, app, mode)
+
 	for idx := range lanes.lanes {
 		if lanes.active == idx {
 			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorLightBlue)
@@ -109,6 +117,9 @@ func main(cmd *cobra.Command, args []string) error {
 	bExit.SetBackgroundColor(tcell.ColorLightGray)
 	bExit.SetSelectedFunc(lanes.CmdExit)
 
+	bMode := tview.NewButton("[blue::-]" + mode) // [blue::-]F12
+	bMode.SetBackgroundColor(tcell.ColorLightGray)
+
 	bMoveHelp := tview.NewButton("")
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
 	lanes.bMoveHelp = bMoveHelp
@@ -124,6 +135,7 @@ func main(cmd *cobra.Command, args []string) error {
 		// AddItem(bDeleteColumn, 10, 1, false).
 		// AddItem(bRenameColumn, 10, 1, false).
 		AddItem(bExit, 10, 1, false).
+		AddItem(bMode, 2+len(mode), 1, false).
 		AddItem(bMoveHelp, 38, 1, false)
 
 	layout := tview.NewFlex().
@@ -179,15 +191,16 @@ func main(cmd *cobra.Command, args []string) error {
 
 var rootCmd = &cobra.Command{
 	Use:          "todo",
-	Short:        "Kanban board",
-	Long:         "kanban todo list",
+	Short:        "TODO App",
+	Long:         "ToDo Main View - optional program argument: mode (e.g. 'private' or 'work')",
 	Version:      AppVersion,
 	SilenceUsage: true,
 	RunE:         main,
+	Args:         cobra.RangeArgs(0, 1),
 }
 
 func init() {
-	// empty
+
 }
 
 func Execute() {

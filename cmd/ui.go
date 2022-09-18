@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+
 	"log"
 	"os"
 	"os/exec"
@@ -14,26 +14,23 @@ import (
 )
 
 type Lanes struct {
-	content  *Content
-	lanes    []*tview.List
-	active   int
-	pages    *tview.Pages
-	app      *tview.Application
-	inselect bool
-	add      *ModalInput
-	edit     *ModalInput
+	mode            string
+	content         *Content
+	lanes           []*tview.List
+	active          int
+	lastActive      int
+	lastActiveSaved bool
+	pages           *tview.Pages
+	app             *tview.Application
+	inselect        bool
+	add             *ModalInput
+	edit            *ModalInput
 
 	bMoveHelp *tview.Button
-
-	// CmdAddTask  func()
-	// CmdEditTask func()
-	// CmdNote     func()
-	// CmdArchive  func()
-	// CmdExit     func()
 }
 
 func (l *Lanes) CmdAbout() {
-	l.setActive()
+	l.saveActive()
 	l.pages.ShowPage("help")
 }
 
@@ -43,14 +40,14 @@ func (l *Lanes) CmdExit() {
 }
 
 func (l *Lanes) CmdAddTask() {
-	l.setActive()
+	l.saveActive()
 	now := time.Now()
 	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
 	l.pages.ShowPage("add")
 }
 
 func (l *Lanes) CmdEditTask() {
-	l.setActive()
+	l.saveActive()
 	if item := l.currentItem(); item != nil {
 		l.edit.SetValue(item.Title, item.Secondary)
 		l.pages.ShowPage("edit")
@@ -58,7 +55,7 @@ func (l *Lanes) CmdEditTask() {
 }
 
 func (l *Lanes) CmdEditNote() {
-	l.setActive()
+	l.saveActive()
 	if runtime.GOOS == "windows" {
 		l.pages.ShowPage("wait")
 		l.app.ForceDraw()
@@ -70,7 +67,7 @@ func (l *Lanes) CmdEditNote() {
 }
 
 func (l *Lanes) CmdArchiveNote() {
-	l.setActive()
+	l.saveActive()
 	l.pages.ShowPage("archive")
 }
 
@@ -79,12 +76,31 @@ func (l *Lanes) CmdSelectNote() {
 	l.selected()
 }
 
-func NewLanes(content *Content, app *tview.Application) *Lanes {
-	l := &Lanes{content, make([]*tview.List, content.GetNumLanes()), 0, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task"), nil}
+func (l *Lanes) Focus() {
+	l.setActive()
+	l.selected()
+}
 
+func NewLanes(content *Content, app *tview.Application, mode string) *Lanes {
+	l := &Lanes{mode, content, make([]*tview.List, content.GetNumLanes()), 0, 0, false, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task"), nil}
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
+		xi := i
+		l.lanes[i].SetFocusFunc(func() {
+			l.lanes[xi].SetSelectedStyle(tcell.StyleDefault)
+			l.active = xi
+			l.lanes[xi].SetSelectedBackgroundColor(tcell.ColorLightBlue)
+			l.lanes[xi].SetSelectedTextColor(tcell.ColorBlack)
+			if l.lastActiveSaved {
+				l.lastActiveSaved = false
+				if l.lastActive > 0 {
+					for i := 0; i < l.lastActive; i++ {
+						l.incActive()
+					}
+				}
+			}
+		})
 		l.lanes[i].ShowSecondaryText(true).SetBorder(true)
 		l.lanes[i].SetTitle(l.content.GetLaneTitle(i))
 		l.lanes[i].SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -130,14 +146,14 @@ func NewLanes(content *Content, app *tview.Application) *Lanes {
 				}
 			case tcell.KeyLeft:
 				if l.inselect {
-					l.left()
+					l.moveSelectionLeft()
 				} else {
 					l.decActive()
 				}
 				return nil
 			case tcell.KeyRight:
 				if l.inselect {
-					l.right()
+					l.moveSelectionRight()
 				} else {
 					l.incActive()
 				}
@@ -338,7 +354,7 @@ func (l *Lanes) down() {
 	l.redraw(l.active, newPos)
 }
 
-func (l *Lanes) left() {
+func (l *Lanes) moveSelectionLeft() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
 	newLane := normPos(l.active-1, len(l.lanes))
 	newPos := l.lanes[newLane].GetCurrentItem()
@@ -350,7 +366,7 @@ func (l *Lanes) left() {
 	l.selected()
 }
 
-func (l *Lanes) right() {
+func (l *Lanes) moveSelectionRight() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
 	newLane := normPos(l.active+1, len(l.lanes))
 	newPos := l.lanes[newLane].GetCurrentItem()
@@ -394,6 +410,12 @@ func (l *Lanes) setActive() {
 	l.app.SetFocus(l.lanes[l.active])
 }
 
+func (l *Lanes) saveActive() {
+	l.setActive()
+	l.lastActive = l.active
+	l.lastActiveSaved = true
+}
+
 func (l *Lanes) currentItem() *Item {
 	pos := l.lanes[l.active].GetCurrentItem()
 	content := l.content.GetLaneItems(l.active)
@@ -406,7 +428,7 @@ func (l *Lanes) currentItem() *Item {
 func (l *Lanes) editNote() {
 	item := l.currentItem()
 	if item != nil {
-		tmp, err := ioutil.TempFile("", "todo_temp_note_")
+		tmp, err := os.CreateTemp("", "todo_temp_note_")
 		if err == nil {
 			name := tmp.Name()
 			defer os.Remove(name)
@@ -424,7 +446,7 @@ func (l *Lanes) editNote() {
 					log.Fatal(err)
 				}
 				if err == nil {
-					note_raw, err := ioutil.ReadFile(name)
+					note_raw, err := os.ReadFile(name)
 					if err == nil {
 						item.Note = string(note_raw)
 					}
@@ -436,7 +458,7 @@ func (l *Lanes) editNote() {
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
 				if err == nil {
-					note_raw, err := ioutil.ReadFile(name)
+					note_raw, err := os.ReadFile(name)
 					if err == nil {
 						item.Note = string(note_raw)
 					}

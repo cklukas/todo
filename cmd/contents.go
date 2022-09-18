@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -70,7 +69,7 @@ func (c *Content) ArchiveItem(lane, idx int) error {
 	archiveItemFileName := fmt.Sprintf("%v.%v.json", now.Format("2006-01-02 15_04_05.000"), c.Titles[lane])
 
 	cnt, _ := json.MarshalIndent(c.Items[lane][idx], "", " ")
-	err := ioutil.WriteFile(path.Join(c.archiveFolder, archiveItemFileName), cnt, 0644)
+	err := os.WriteFile(path.Join(c.archiveFolder, archiveItemFileName), cnt, 0644)
 	if err != nil {
 		return err
 	}
@@ -105,13 +104,13 @@ func (c *Content) Save() error {
 	now := time.Now()
 	dayFileName := path.Join(c.backupFolder, fmt.Sprintf("%v.json", now.Format("2006-01-02")))
 	if _, err := os.Stat(dayFileName); errors.Is(err, os.ErrNotExist) {
-		err = ioutil.WriteFile(dayFileName, cnt, 0644)
+		err = os.WriteFile(dayFileName, cnt, 0644)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := ioutil.WriteFile(c.fname, cnt, 0644)
+	err := os.WriteFile(c.fname, cnt, 0644)
 	if err != nil {
 		return err
 	}
