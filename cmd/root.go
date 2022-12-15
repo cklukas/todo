@@ -32,12 +32,7 @@ func main(cmd *cobra.Command, args []string) error {
 	todoDir := ".todo"
 	mode := "main"
 
-	usr, errU := user.Current()
-	if errU != nil {
-		log.Fatal(errU)
-	}
-
-	todoDirModes := path.Join(usr.HomeDir, todoDir, "mode")
+	todoDirModes := path.Join(todoDir, "mode")
 
 	if len(args) == 1 && args[0] != "main" {
 		saveName, err := filenamify.FilenamifyV2(args[0], func(options *filenamify.Options) {
@@ -57,7 +52,7 @@ func main(cmd *cobra.Command, args []string) error {
 
 	for {
 		var nextMode string
-		nextMode, err = launchGui(usr, todoDir, todoDirModes, saveName)
+		nextMode, err = launchGui(todoDir, todoDirModes, saveName)
 		if len(nextMode) == 0 {
 			break
 		}
@@ -79,7 +74,12 @@ func main(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func launchGui(usr *user.User, todoDir, todoDirModes, mode string) (string, error) {
+func launchGui(todoDir, todoDirModes, mode string) (string, error) {
+	usr, errU := user.Current()
+	if errU != nil {
+		log.Fatal(errU)
+	}
+
 	archiveFolder := path.Join(usr.HomeDir, todoDir, "archive")
 	archiveDir, err := CreateDir(archiveFolder)
 	if err != nil {
@@ -105,10 +105,13 @@ func launchGui(usr *user.User, todoDir, todoDirModes, mode string) (string, erro
 	}
 
 	content.SetFileName(fname, archiveDir, backupDir)
-	content.Save()
+	err = content.Save()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	app := tview.NewApplication()
-	lanes := NewLanes(content, app, mode, todoDirModes)
+	lanes := NewLanes(content, app, mode, path.Join(usr.HomeDir, todoDirModes))
 
 	for idx := range lanes.lanes {
 		if lanes.active == idx {

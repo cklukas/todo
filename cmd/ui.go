@@ -90,6 +90,7 @@ func (l *Lanes) CmdSelectMode() {
 			}
 			l.pages.HidePage("mode")
 		})
+
 	modePage.SetFocus(activeModeIndex)
 	l.setActive()
 	l.pages.RemovePage("mode")
