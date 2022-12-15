@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"log"
 	"os"
@@ -14,6 +15,8 @@ import (
 )
 
 type Lanes struct {
+	nextMode        string
+	todoDirModes    string
 	mode            string
 	content         *Content
 	lanes           []*tview.List
@@ -25,6 +28,7 @@ type Lanes struct {
 	inselect        bool
 	add             *ModalInput
 	edit            *ModalInput
+	addMode         *ModalInput
 
 	bMoveHelp *tview.Button
 }
@@ -37,6 +41,60 @@ func (l *Lanes) CmdAbout() {
 func (l *Lanes) CmdExit() {
 	l.setActive()
 	l.pages.ShowPage("quit")
+}
+
+func (l *Lanes) ListValidModes(activeMode string) ([]string, int, error) {
+	activeModeIndex := 0
+	modes := make([]string, 0)
+	modes = append(modes, "main")
+	dirEntries, err := os.ReadDir(l.todoDirModes)
+	if err != nil {
+		return modes, 0, err
+	}
+	idx := 0
+	for _, di := range dirEntries {
+		if di.Name() == "main" {
+			continue
+		}
+		if di.IsDir() && !strings.HasPrefix(di.Name(), ".") {
+			modes = append(modes, di.Name())
+			idx++
+			if di.Name() == activeMode {
+				activeModeIndex = idx
+			}
+		}
+	}
+	return modes, activeModeIndex, nil
+}
+
+func (l *Lanes) CmdSelectMode() {
+	modes, activeModeIndex, err := l.ListValidModes(l.mode)
+	if err != nil {
+		log.Fatal(err)
+	}
+	modePage := tview.NewModal().
+		SetText("Select mode").
+		AddButtons(modes).
+		AddButtons([]string{"Add", "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			switch buttonLabel {
+			case "Add":
+				l.pages.HidePage("mode")
+				l.pages.ShowPage("addMode")
+				return
+			case "Cancel":
+				// empty
+			default:
+				l.nextMode = buttonLabel
+				l.app.Stop()
+			}
+			l.pages.HidePage("mode")
+		})
+	modePage.SetFocus(activeModeIndex)
+	l.setActive()
+	l.pages.RemovePage("mode")
+	l.pages.AddPage("mode", modePage, false, false)
+	l.pages.ShowPage("mode")
 }
 
 func (l *Lanes) CmdAddTask() {
@@ -52,6 +110,11 @@ func (l *Lanes) CmdEditTask() {
 		l.edit.SetValue(item.Title, item.Secondary)
 		l.pages.ShowPage("edit")
 	}
+}
+
+func (l *Lanes) CmdAddMode() {
+	l.saveActive()
+	l.pages.ShowPage("addMode")
 }
 
 func (l *Lanes) CmdEditNote() {
@@ -81,8 +144,8 @@ func (l *Lanes) Focus() {
 	l.selected()
 }
 
-func NewLanes(content *Content, app *tview.Application, mode string) *Lanes {
-	l := &Lanes{mode, content, make([]*tview.List, content.GetNumLanes()), 0, 0, false, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task"), nil}
+func NewLanes(content *Content, app *tview.Application, mode, todoDirModes string) *Lanes {
+	l := &Lanes{"", todoDirModes, mode, content, make([]*tview.List, content.GetNumLanes()), 0, 0, false, tview.NewPages(), app, false, NewModalInput("Add Task"), NewModalInput("Edit Task"), NewModalInputMode("Add Mode", todoDirModes), nil}
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
@@ -181,6 +244,8 @@ func NewLanes(content *Content, app *tview.Application, mode string) *Lanes {
 				l.CmdEditTask()
 			case 'n':
 				l.CmdEditNote()
+			case 'm':
+				l.CmdSelectMode()
 			}
 			return event
 		})
@@ -220,7 +285,7 @@ func NewLanes(content *Content, app *tview.Application, mode string) *Lanes {
 	// help := tview.NewModal().
 	help := tview.NewModal()
 	help = help.
-		SetText("- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, q - quit").
+		SetText("- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, m - select mode, q - quit").
 		AddButtons([]string{"OK"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.pages.HidePage("help")
@@ -287,6 +352,16 @@ func NewLanes(content *Content, app *tview.Application, mode string) *Lanes {
 		l.setActive()
 	})
 	l.pages.AddPage("add", l.add, false, false)
+
+	l.addMode.SetDoneFunc(func(text string, secondary string, success bool) {
+		l.pages.HidePage("addMode")
+		l.setActive()
+		if success {
+			l.nextMode = text
+			l.app.Stop()
+		}
+	})
+	l.pages.AddPage("addMode", l.addMode, false, false)
 
 	l.edit.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {

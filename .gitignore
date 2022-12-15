@@ -4,3 +4,4 @@
 /cmd/ui.go
 /__debug_bin
 oryxBuildBinary
+.DS_Store

@@ -7,6 +7,7 @@ replace github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8 => github.com/c
 require github.com/spf13/cobra v1.4.0
 
 require (
+	github.com/flytam/filenamify v1.1.2
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

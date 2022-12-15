@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"path"
 
+	"github.com/flytam/filenamify"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -28,19 +29,57 @@ func CreateDir(path string) (string, error) {
 var AppVersion string = ""
 
 func main(cmd *cobra.Command, args []string) error {
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	todoDir := ".todo"
 	mode := "main"
 
-	if len(args) == 1 {
-		todoDir = path.Join(todoDir, "mode", args[0])
-		mode = args[0]
+	usr, errU := user.Current()
+	if errU != nil {
+		log.Fatal(errU)
 	}
 
+	todoDirModes := path.Join(usr.HomeDir, todoDir, "mode")
+
+	if len(args) == 1 && args[0] != "main" {
+		saveName, err := filenamify.FilenamifyV2(args[0], func(options *filenamify.Options) {
+			options.Replacement = "_"
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		todoDir = path.Join(todoDirModes, saveName)
+		mode = saveName
+	}
+
+	saveName := mode
+
+	var err error
+
+	for {
+		var nextMode string
+		nextMode, err = launchGui(usr, todoDir, todoDirModes, saveName)
+		if len(nextMode) == 0 {
+			break
+		}
+		if nextMode == "main" {
+			todoDir = ".todo"
+			mode = "main"
+			saveName = "main"
+			continue
+		}
+		saveName, err = filenamify.FilenamifyV2(nextMode, func(options *filenamify.Options) {
+			options.Replacement = "_"
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		todoDir = path.Join(todoDirModes, saveName)
+	}
+
+	return err
+}
+
+func launchGui(usr *user.User, todoDir, todoDirModes, mode string) (string, error) {
 	archiveFolder := path.Join(usr.HomeDir, todoDir, "archive")
 	archiveDir, err := CreateDir(archiveFolder)
 	if err != nil {
@@ -69,7 +108,7 @@ func main(cmd *cobra.Command, args []string) error {
 	content.Save()
 
 	app := tview.NewApplication()
-	lanes := NewLanes(content, app, mode)
+	lanes := NewLanes(content, app, mode, todoDirModes)
 
 	for idx := range lanes.lanes {
 		if lanes.active == idx {
@@ -119,6 +158,7 @@ func main(cmd *cobra.Command, args []string) error {
 
 	bMode := tview.NewButton("[blue::-]" + mode) // [blue::-]F12
 	bMode.SetBackgroundColor(tcell.ColorLightGray)
+	bMode.SetSelectedFunc(lanes.CmdSelectMode)
 
 	bMoveHelp := tview.NewButton("")
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
@@ -185,8 +225,7 @@ func main(cmd *cobra.Command, args []string) error {
 		log.Fatalf("Error running application: %v\n", err)
 	}
 
-	content.Save()
-	return nil
+	return lanes.nextMode, content.Save()
 }
 
 var rootCmd = &cobra.Command{

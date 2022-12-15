@@ -55,6 +55,43 @@ func NewModalInput(title string) *ModalInput {
 	return m
 }
 
+func NewModalInputMode(title, modeDirectory string) *ModalInput {
+	form := tview.NewForm()
+	_, taskInp := form.AddInputField("Mode:", "", 50, nil, nil)
+
+	m := &ModalInput{form, tview.NewFrame(form), "", "", nil}
+	taskInp.SetChangedFunc(func(text string) {
+		m.main = text
+	})
+
+	m.frame.AddText("New modes are saved in '"+modeDirectory+"'", false, 0, tview.Styles.BorderColor)
+
+	m.SetButtonsAlign(tview.AlignCenter).
+		SetButtonBackgroundColor(tview.Styles.PrimitiveBackgroundColor).
+		SetButtonTextColor(tview.Styles.PrimaryTextColor).
+		SetBackgroundColor(tview.Styles.ContrastBackgroundColor).
+		SetBorderPadding(0, 0, 0, 0)
+
+	m.AddButton("OK", func() {
+		if m.done != nil {
+			m.done(m.main, m.secondary, true) // Passed
+		}
+	})
+	m.AddButton("Cancel", func() {
+		if m.done != nil {
+			m.done(m.main, m.secondary, false)
+		}
+	})
+
+	m.frame.SetTitle(fmt.Sprintf(" %v ", title))
+	m.frame.SetBorders(0, 0, 1, 0, 0, 0).
+		SetBorder(true).
+		SetBackgroundColor(tview.Styles.ContrastBackgroundColor).
+		SetBorderPadding(1, 1, 1, 1)
+
+	return m
+}
+
 // SetValue sets the current value in the item
 func (m *ModalInput) SetValue(text string, secondary string) {
 	m.main = text
