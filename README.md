@@ -14,7 +14,7 @@ A simple Kanban board for your terminal.
 
 ## Modes
 
-The app may work with multiple todo lists. By default the mode "main" is activated. By launching the program with a single parameter (e.g. 'private' or 'work'), a new todo list is created and used for the particular execution of the program. If no argument is provided, the default list is used, indicated in the status line as 'main' (after the F10 Exit command).
+The app may work with multiple todo lists. By default the mode "main" is activated. By launching the program with a single parameter (e.g. 'private' or 'work'), a new todo list is created and used for the particular execution of the program. If no argument is provided, the default list is used, indicated in the status line as 'main' (after the F10 Exit command). From version 1.0.11 on, you can also press 'm' to show the mode selection dialog. This dialog is also shown if you click on the mode name in the status bar. The mode selection dialog allows selection of all existing modes (which do not start with a dot), or by clicking 'Add' the creation of a new mode.
 
 ## Compatibility
 
