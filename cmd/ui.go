@@ -298,7 +298,6 @@ func NewLanes(content *Content, app *tview.Application, mode, todoDirModes strin
 	l.pages.AddPage("help", help, false, false)
 
 	delete := tview.NewModal().
-		SetTitle(" Delete Task ").
 		SetText("About to delete selected task. Continue?").
 		AddButtons([]string{"Yes", "No"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
@@ -310,11 +309,11 @@ func NewLanes(content *Content, app *tview.Application, mode, todoDirModes strin
 			}
 			l.pages.HidePage("delete")
 			l.setActive()
-		})
+		}).SetTitle(" Delete Task ")
+
 	l.pages.AddPage("delete", delete, false, false)
 
 	archive := tview.NewModal().
-		SetTitle(" Archive Task ").
 		SetText("About to archive selected task. Continue?").
 		AddButtons([]string{"Yes", "No"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
@@ -330,12 +329,13 @@ func NewLanes(content *Content, app *tview.Application, mode, todoDirModes strin
 			}
 			l.pages.HidePage("archive")
 			l.setActive()
-		})
+		}).SetTitle(" Archive Task ")
+
 	l.pages.AddPage("archive", archive, false, false)
 
 	waitPage := tview.NewModal().
-		SetTitle(" Editing Note ").
-		SetText("When finished editing the note, save the changes and close Notepad. The item note text will be updated and you can continue to use the ToDo app.")
+		SetText("When finished editing the note, save the changes and close Notepad. The item note text will be updated and you can continue to use the ToDo app.").
+		SetTitle(" Editing Note ")
 
 	l.pages.AddPage("wait", waitPage, false, false)
 

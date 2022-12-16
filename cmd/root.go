@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 
 	"github.com/flytam/filenamify"
 	"github.com/fsnotify/fsnotify"
@@ -203,7 +204,7 @@ func launchGui(todoDir, todoDirModes, mode string) (string, error) {
 						return
 					}
 					// log.Println("event:", event)
-					if event.Op&fsnotify.Write == fsnotify.Write {
+					if filepath.Base(event.Name) == "todo.json" && (event.Has(fsnotify.Write) || event.Has(fsnotify.Create)) {
 						content.Read()
 						lanes.RedrawAllLanes()
 						app.ForceDraw()
@@ -217,7 +218,12 @@ func launchGui(todoDir, todoDirModes, mode string) (string, error) {
 			}
 		}()
 
-		err = watcher.Add(fname)
+		// err = watcher.Add(fname)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		err = watcher.Add(filepath.Dir(fname))
 		if err != nil {
 			log.Fatal(err)
 		}

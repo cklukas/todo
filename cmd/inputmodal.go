@@ -18,15 +18,13 @@ type ModalInput struct {
 
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
-	_, taskInp := form.AddInputField("Task:", "", 50, nil, nil)
-	_, secondaryInp := form.AddInputField("Created / due:", "", 50, nil, nil)
-
 	m := &ModalInput{form, tview.NewFrame(form), "", "", nil}
 
-	taskInp.SetChangedFunc(func(text string) {
+	form.AddInputField("Task:", "", 50, nil, func(text string) {
 		m.main = text
 	})
-	secondaryInp.SetChangedFunc(func(text string) {
+
+	form.AddInputField("Created / due:", "", 50, nil, func(text string) {
 		m.secondary = text
 	})
 
@@ -57,10 +55,9 @@ func NewModalInput(title string) *ModalInput {
 
 func NewModalInputMode(title, modeDirectory string) *ModalInput {
 	form := tview.NewForm()
-	_, taskInp := form.AddInputField("Mode:", "", 50, nil, nil)
-
 	m := &ModalInput{form, tview.NewFrame(form), "", "", nil}
-	taskInp.SetChangedFunc(func(text string) {
+
+	form.AddInputField("Mode:", "", 50, nil, func(text string) {
 		m.main = text
 	})
 
