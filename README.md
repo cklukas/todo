@@ -1,5 +1,7 @@
 # TODO Command Line App
 
+[![Go Report](https://goreportcard.com/badge/github.com/epiclabs-io/winman)](https://goreportcard.com/report/github.com/cklukas/todo)
+
 A simple Kanban board for your terminal.
 
 * Stores data in a simple JSON document in `$HOME/.todo/todo.json`
