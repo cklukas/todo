@@ -1,6 +1,6 @@
 # TODO Command Line App
 
-[![Go Report](https://goreportcard.com/badge/github.com/epiclabs-io/winman)](https://goreportcard.com/report/github.com/cklukas/todo)
+[![Go Report](https://goreportcard.com/badge/github.com/cklukas/todo)](https://goreportcard.com/report/github.com/cklukas/todo)
 
 A simple Kanban board for your terminal.
 
