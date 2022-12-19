@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path"
+	"sync"
 	"time"
+
+	"github.com/flytam/filenamify"
 )
 
 type Item struct {
@@ -17,59 +19,91 @@ type Item struct {
 	Note      string
 }
 
-type Content struct {
-	Titles        []string
-	Items         [][]Item
-	fname         string `json:"-"`
-	archiveFolder string `json:"-"`
-	backupFolder  string `json:"-"`
+type ToDoContent struct {
+	Titles         []string
+	Items          [][]Item
+	fname          string     `json:"-"`
+	archiveFolder  string     `json:"-"`
+	backupFolder   string     `json:"-"`
+	readWriteMutex sync.Mutex `json:"-"`
 }
 
-func NewContentIo(r io.Reader) *Content {
-	c := &Content{}
-	decoder := json.NewDecoder(r)
-	if err := decoder.Decode(c); err != nil {
-		return nil
+func (c *ToDoContent) InitializeNew() {
+	c.Titles = []string{"To Do", "Doing", "Done"}
+	c.Items = make([][]Item, 3)
+}
+
+func (c *ToDoContent) ReadFromFile(fname string) error {
+	f, err := os.OpenFile(fname, os.O_RDONLY, os.FileMode(int(0600)))
+	if err != nil {
+		return err
 	}
-	return c
+
+	err = json.NewDecoder(f).Decode(c)
+
+	f.Close()
+
+	return err
 }
 
-func NewContentDefault() *Content {
-	ret := &Content{}
-	ret.Titles = []string{"To Do", "Doing", "Done"}
-	ret.Items = make([][]Item, 3)
-	return ret
-}
-
-func (c *Content) GetNumLanes() int {
+func (c *ToDoContent) GetNumLanes() int {
 	return len(c.Titles)
 }
 
-func (c *Content) GetLaneTitle(idx int) string {
+func (c *ToDoContent) GetLaneTitle(idx int) string {
 	return fmt.Sprintf(" %v (%v) ", c.Titles[idx], len(c.Items[idx]))
 }
 
-func (c *Content) GetLaneItems(idx int) []Item {
+func (c *ToDoContent) SetLaneTitle(idx int, title string) {
+	c.Titles[idx] = title
+}
+
+func (c *ToDoContent) GetLaneItems(idx int) []Item {
 	return c.Items[idx]
 }
 
-func (c *Content) MoveItem(fromlane, fromidx, tolane, toidx int) {
+func (c *ToDoContent) RemoveLane(lane int) {
+	c.Titles = append(c.Titles[:lane], c.Titles[lane+1:]...)
+	c.Items = append(c.Items[:lane], c.Items[lane+1:]...)
+}
+
+func (c *ToDoContent) InsertNewLane(addToLeft bool, laneTitle string, relativeToLaneIdx int) int {
+	i := relativeToLaneIdx
+	if !addToLeft {
+		i++
+	}
+
+	newItemList := make([][]Item, 0)
+	newItemList = append(newItemList, []Item{})
+	c.Items = append(c.Items[:i], append(newItemList, c.Items[i:]...)...)
+	c.Titles = append(c.Titles[:i], append([]string{laneTitle}, c.Titles[i:]...)...)
+
+	return i
+}
+
+func (c *ToDoContent) MoveItem(fromlane, fromidx, tolane, toidx int) {
 	item := c.Items[fromlane][fromidx]
 	// https://github.com/golang/go/wiki/SliceTricks
 	c.Items[fromlane] = append(c.Items[fromlane][:fromidx], c.Items[fromlane][fromidx+1:]...)
 	c.Items[tolane] = append(c.Items[tolane][:toidx], append([]Item{item}, c.Items[tolane][toidx:]...)...)
 }
 
-func (c *Content) DelItem(lane, idx int) {
+func (c *ToDoContent) DelItem(lane, idx int) {
 	c.Items[lane] = append(c.Items[lane][:idx], c.Items[lane][idx+1:]...)
 }
 
-func (c *Content) ArchiveItem(lane, idx int) error {
+func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 	now := time.Now()
-	archiveItemFileName := fmt.Sprintf("%v.%v.json", now.Format("2006-01-02 15_04_05.000"), c.Titles[lane])
+	saveName, err := filenamify.FilenamifyV2(c.Titles[lane], func(options *filenamify.Options) {
+		options.Replacement = "_"
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	archiveItemFileName := fmt.Sprintf("%v.%v.json", now.Format("2006-01-02 15_04_05.000"), saveName)
 
 	cnt, _ := json.MarshalIndent(c.Items[lane][idx], "", " ")
-	err := os.WriteFile(path.Join(c.archiveFolder, archiveItemFileName), cnt, 0644)
+	err = os.WriteFile(path.Join(c.archiveFolder, archiveItemFileName), cnt, 0644)
 	if err != nil {
 		return err
 	}
@@ -77,11 +111,13 @@ func (c *Content) ArchiveItem(lane, idx int) error {
 	return nil
 }
 
-func (c *Content) AddItem(lane, idx int, title string, secondary string) {
+func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string) {
 	c.Items[lane] = append(c.Items[lane][:idx], append([]Item{{title, secondary, ""}}, c.Items[lane][idx:]...)...)
 }
 
-func (c *Content) Read() {
+func (c *ToDoContent) Read() {
+	c.readWriteMutex.Lock()
+	defer c.readWriteMutex.Unlock()
 	f, err := os.OpenFile(c.fname, os.O_RDONLY, os.FileMode(int(0600)))
 	if err == nil {
 		decoder := json.NewDecoder(f)
@@ -92,13 +128,16 @@ func (c *Content) Read() {
 	}
 }
 
-func (c *Content) SetFileName(fname, archiveFolder, backupFolder string) {
+func (c *ToDoContent) SetFileName(fname, archiveFolder, backupFolder string) {
 	c.fname = fname
 	c.archiveFolder = archiveFolder
 	c.backupFolder = backupFolder
 }
 
-func (c *Content) Save() error {
+func (c *ToDoContent) Save() error {
+	c.readWriteMutex.Lock()
+	defer c.readWriteMutex.Unlock()
+
 	cnt, _ := json.MarshalIndent(c, "", " ")
 
 	now := time.Now()

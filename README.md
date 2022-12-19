@@ -5,12 +5,14 @@
 A simple Kanban board for your terminal.
 
 * Stores data in a simple JSON document in `$HOME/.todo/todo.json`
-* Makes a daily backup of the data in `$HOME/.todo/backup/`
+* Makes a daily backup of the data in `$HOME/.todo/backup/` (at first start on a particular day)
 * Contains a function to archive an todo item in `$HOME/.todo/archive`
 * If a non-default mode is used (see below), the files and folders for that mode (`todo.json`, `backup`, `archive`) are saved under `$home/.todo/mode/[mode]`
 
 * Allows input of topic and second description line
 * Provides function to view/edit a longer note for each item in vim
+* All changes are immediately saved (no save command)
+* The application can be started multiple times, modifications performed in one instance are detected in other instances (through monitoring changes to the active `todo.json` file)
 * Use [red], [blue] etc. to colorize your item text
 * New: Hotkeys F1..F10 are shown in status bar
 

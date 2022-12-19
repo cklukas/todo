@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/user"
@@ -51,15 +52,15 @@ func main(cmd *cobra.Command, args []string) error {
 
 	var err error
 
+	nextModeLaneFocus := 0
 	for {
 		var nextMode string
-		nextMode, err = launchGui(todoDir, todoDirModes, saveName)
+		nextMode, nextModeLaneFocus, err = launchGui(todoDir, todoDirModes, saveName, nextModeLaneFocus)
 		if len(nextMode) == 0 {
 			break
 		}
 		if nextMode == "main" {
 			todoDir = ".todo"
-			mode = "main"
 			saveName = "main"
 			continue
 		}
@@ -75,54 +76,7 @@ func main(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func launchGui(todoDir, todoDirModes, mode string) (string, error) {
-	usr, errU := user.Current()
-	if errU != nil {
-		log.Fatal(errU)
-	}
-
-	archiveFolder := path.Join(usr.HomeDir, todoDir, "archive")
-	archiveDir, err := CreateDir(archiveFolder)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	backupFolder := path.Join(usr.HomeDir, todoDir, "backup")
-	backupDir, err := CreateDir(backupFolder)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fname := path.Join(usr.HomeDir, todoDir, "todo.json")
-	var content *Content
-	f, err := os.OpenFile(fname, os.O_RDONLY, os.FileMode(int(0600)))
-	if err == nil {
-		content = NewContentIo(f)
-		f.Close()
-	}
-
-	if content == nil {
-		content = NewContentDefault()
-	}
-
-	content.SetFileName(fname, archiveDir, backupDir)
-	err = content.Save()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	app := tview.NewApplication()
-	lanes := NewLanes(content, app, mode, path.Join(usr.HomeDir, todoDirModes))
-
-	for idx := range lanes.lanes {
-		if lanes.active == idx {
-			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorLightBlue)
-			lanes.lanes[idx].SetSelectedTextColor(tcell.ColorBlack)
-		} else {
-			lanes.lanes[idx].SetSelectedStyle(tcell.StyleDefault)
-		}
-	}
-
+func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
 	bAbout := tview.NewButton("[brown::-]F1 [black::-]About")
 	bAbout.SetBackgroundColor(tcell.ColorLightGray)
 	bAbout.SetSelectedFunc(lanes.CmdAbout)
@@ -147,14 +101,9 @@ func launchGui(todoDir, todoDirModes, mode string) (string, error) {
 	bSelectToDo.SetBackgroundColor(tcell.ColorLightGray)
 	bSelectToDo.SetSelectedFunc(lanes.CmdSelectNote)
 
-	// bAddColumn := tview.NewButton("[darkblue::-]F8 [black::-]Add Column")
-	// bAddColumn.SetBackgroundColor(tcell.ColorLightGray)
-
-	// bDeleteColumn := tview.NewButton("[darkblue::-]F8 [black::-]Delete")
-	// bDeleteColumn.SetBackgroundColor(tcell.ColorLightGray)
-
-	// bRenameColumn := tview.NewButton("[darkblue::-]F9 [black::-]Rename")
-	// bRenameColumn.SetBackgroundColor(tcell.ColorLightGray)
+	bLanesCommands := tview.NewButton("[red::-]F7 [black::-]Lane")
+	bLanesCommands.SetBackgroundColor(tcell.ColorLightGray)
+	bLanesCommands.SetSelectedFunc(lanes.CmdLanesCmds)
 
 	bExit := tview.NewButton("[brown::-]F10 [black::-]Exit")
 	bExit.SetBackgroundColor(tcell.ColorLightGray)
@@ -162,79 +111,123 @@ func launchGui(todoDir, todoDirModes, mode string) (string, error) {
 
 	bMode := tview.NewButton("[blue::-]" + mode) // [blue::-]F12
 	bMode.SetBackgroundColor(tcell.ColorLightGray)
-	bMode.SetSelectedFunc(lanes.CmdSelectMode)
+	bMode.SetSelectedFunc(lanes.CmdSelectModeDialog)
 
 	bMoveHelp := tview.NewButton("")
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
 	lanes.bMoveHelp = bMoveHelp
 
-	info := tview.NewFlex().SetDirection(tview.FlexColumn).
+	defaultStatusBarMenuItems := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(bAbout, 10, 1, false).
 		AddItem(bAddToDo, 13, 1, false).
 		AddItem(bEditToDo, 9, 1, false).
 		AddItem(bNoteToDo, 9, 1, false).
 		AddItem(bArchiveToDo, 13, 1, false).
 		AddItem(bSelectToDo, 10, 1, false).
-		// AddItem(bAddColumn, 15, 1, false).
-		// AddItem(bDeleteColumn, 10, 1, false).
-		// AddItem(bRenameColumn, 10, 1, false).
+		AddItem(bLanesCommands, 9, 1, false).
 		AddItem(bExit, 10, 1, false).
 		AddItem(bMode, 2+len(mode), 1, false).
 		AddItem(bMoveHelp, 38, 1, false)
 
+	return defaultStatusBarMenuItems
+}
+
+func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, app *tview.Application) {
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+
+			// log.Println("event:", event)
+			if filepath.Base(event.Name) == "todo.json" && (event.Has(fsnotify.Write) || event.Has(fsnotify.Create)) {
+				content.Read()
+				lanes.RedrawAllLanes()
+				app.ForceDraw()
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("error:", err)
+		}
+	}
+}
+
+func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (string, int, error) {
+	usr, errU := user.Current()
+	if errU != nil {
+		log.Fatal(errU)
+	}
+
+	archiveDir, err := CreateDir(path.Join(usr.HomeDir, todoDir, "archive"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	backupDir, err := CreateDir(path.Join(usr.HomeDir, todoDir, "backup"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fname := path.Join(usr.HomeDir, todoDir, "todo.json")
+
+	content := new(ToDoContent)
+	err = content.ReadFromFile(fname)
+	if err != nil {
+		content.InitializeNew()
+	}
+
+	content.SetFileName(fname, archiveDir, backupDir)
+	err = content.Save()
+	if err != nil {
+		log.Fatal(fmt.Errorf("could not save todos in '%v': %w", fname, err))
+	}
+
+	app := tview.NewApplication()
+	lanes := NewLanes(content, app, mode, path.Join(usr.HomeDir, todoDirModes))
+
+	// lanes.active = nextModeLaneFocus
+	// lanes.lastActive = nextModeLaneFocus
+
+	for idx := range lanes.lanes {
+		if lanes.active == idx {
+			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorLightBlue)
+			lanes.lanes[idx].SetSelectedTextColor(tcell.ColorBlack)
+		} else {
+			lanes.lanes[idx].SetSelectedStyle(tcell.StyleDefault)
+		}
+	}
+
+	defaultStatusBarMenuItems := getStatusBar(lanes, mode)
+
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(lanes.GetUi(), 0, 1, true).
-		AddItem(info, 1, 1, false)
+		AddItem(defaultStatusBarMenuItems, 1, 1, false)
 	app.SetRoot(layout, true).EnableMouse(true)
 
-	// watch todo.json for changes
-	if _, err := os.Stat(fname); err == nil {
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer watcher.Close()
-
-		go func() {
-			for {
-				select {
-				case event, ok := <-watcher.Events:
-					if !ok {
-						return
-					}
-					// log.Println("event:", event)
-					if filepath.Base(event.Name) == "todo.json" && (event.Has(fsnotify.Write) || event.Has(fsnotify.Create)) {
-						content.Read()
-						lanes.RedrawAllLanes()
-						app.ForceDraw()
-					}
-				case err, ok := <-watcher.Errors:
-					if !ok {
-						return
-					}
-					log.Println("error:", err)
-				}
-			}
-		}()
-
-		// err = watcher.Add(fname)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-
-		err = watcher.Add(filepath.Dir(fname))
-		if err != nil {
-			log.Fatal(err)
-		}
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
 	}
-	// end of watch todo.json
+
+	// monitor changes to todo.json in background
+	defer watcher.Close()
+	go JsonWatcher(watcher, content, lanes, app)
+
+	// watch directory
+	err = watcher.Add(filepath.Dir(fname))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := app.Run(); err != nil {
 		log.Fatalf("Error running application: %v\n", err)
 	}
 
-	return lanes.nextMode, content.Save()
+	return lanes.nextMode, lanes.nextLaneFocus, content.Save()
 }
 
 var rootCmd = &cobra.Command{
