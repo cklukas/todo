@@ -198,8 +198,7 @@ func (l *Lanes) CmdLanesCmds() {
 	lanePage := tview.NewModal().
 		SetTitle(" Lane Commands ").
 		SetText(fmt.Sprintf("Rename lane '%v', add a new lane, or remove it (tasks of current lane are moved to another lane or archived):", l.GetActiveLaneName())).
-		AddButtons([]string{"Rename", "Add to left", "Add to right", "Merge/Remove"}).
-		AddButtons([]string{"Cancel"}).
+		AddButtons([]string{"Rename", "Add to left", "Add to right", "Merge/Remove", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			switch buttonLabel {
 			case "Rename":
@@ -289,10 +288,9 @@ func (l *Lanes) removeMergeLaneDialog(initActiveLane int) {
 	removeLaneDialog := tview.NewModal().
 		SetTitle(" Remove Lane ").
 		SetText(
-			fmt.Sprintf("About to [red]delete[white] lane '%v'.\n\nSelect a target lane, where the %v task%v of the current lane will be moved to, or select 'Archive' to remove %v.",
+			fmt.Sprintf("CAUTION: About to [red]delete[white] lane '%v'.\n\nSelect a target lane, where the %v task%v of the current lane will be moved to, or select 'Archive' to remove %v.",
 				activeLane, nItemsInActiveLane, endS, themIt)).
-		AddButtons(targetLanes).
-		AddButtons([]string{"Archive", "Cancel"})
+		AddButtons(append(targetLanes, "Archive", "Cancel"))
 
 	removeLaneDialog.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 		l.removeMergeLaneCommand(buttonIndex, buttonLabel, targetLanes, initActiveLane)

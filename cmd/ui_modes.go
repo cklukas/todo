@@ -1,12 +1,24 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/rivo/tview"
 )
+
+func (l *Lanes) ListValidModesRemoveProvided(activeMode string) ([]string, int, error) {
+	res := make([]string, 0)
+	modes, activeModeIndex, _ := l.ListValidModes(activeMode)
+	for _, m := range modes {
+		if m != activeMode {
+			res = append(res, m)
+		}
+	}
+	return res, activeModeIndex, nil
+}
 
 func (l *Lanes) ListValidModes(activeMode string) ([]string, int, error) {
 	activeModeIndex := 0
@@ -42,9 +54,8 @@ func (l *Lanes) CmdSelectModeDialog() {
 	}
 	modePage := tview.NewModal().
 		SetTitle(" Mode Selection ").
-		SetText("Select mode, add a new, or remove the current mode (tasks of all lanes are moved to the lanes of another mode or archived)").
-		AddButtons(modes).
-		AddButtons([]string{"Add", "Merge/Remove", "Cancel"}).
+		SetText("Modes allow separation of ToDo lists into categories.\n\nSelect an existing mode, 'Add' a new, or 'Merge/Remove' the current mode (tasks of all lanes are moved to the lanes of another mode or archived)").
+		AddButtons(append(modes, "Add", "Merge/Remove", "Cancel")).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.cmdSelectModeDialogAction(buttonIndex, buttonLabel, lastIndex)
 		})
@@ -56,6 +67,32 @@ func (l *Lanes) CmdSelectModeDialog() {
 	l.pages.ShowPage("mode")
 }
 
+func (l *Lanes) CmdRemoveModeDialog() {
+	lastIndex := l.saveActive()
+	modes, _, err := l.ListValidModesRemoveProvided(l.mode)
+	if err != nil {
+		log.Fatal(err)
+	}
+	modePage := tview.NewModal().
+		SetTitle(" Remove Mode ").
+		SetText(
+			fmt.Sprintf("CAUTION: About to [red]delete[white] mode '%v'.\n\nTasks of the current mode will be moved into the respective lanes of the selected target mode, or can be removed by selecting 'Archive'.", l.mode)).
+		AddButtons(append(modes, "Archive", "Cancel")).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			l.cmdRemoveModeAction(buttonIndex, buttonLabel, lastIndex)
+		})
+
+	modePage.SetFocus(len(modes) + 1)
+	l.setActive()
+	l.pages.RemovePage("removeMode")
+	l.pages.AddPage("removeMode", modePage, false, false)
+	l.pages.ShowPage("removeMode")
+}
+
+func (l *Lanes) cmdRemoveModeAction(buttonIndex int, buttonLabel string, lastIndex int) {
+	l.pages.RemovePage("removeMode")
+}
+
 func (l *Lanes) cmdSelectModeDialogAction(buttonIndex int, buttonLabel string, lastIndex int) {
 	if buttonIndex >= 0 {
 		switch buttonLabel {
@@ -64,7 +101,9 @@ func (l *Lanes) cmdSelectModeDialogAction(buttonIndex int, buttonLabel string, l
 			l.pages.ShowPage("addMode")
 			return
 		case "Merge/Remove":
-			// empty
+			l.pages.HidePage("mode")
+			l.CmdRemoveModeDialog()
+			return
 		case "Cancel":
 			// empty
 		default:
