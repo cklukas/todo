@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/rivo/tview"
@@ -34,6 +36,9 @@ func (l *Lanes) ListValidModes(activeMode string) ([]string, int, error) {
 		if di.Name() == "main" {
 			continue
 		}
+		if _, err := os.Stat(filepath.Join(l.todoDirModes, di.Name(), "todo.json")); errors.Is(err, os.ErrNotExist) {
+			continue
+		}
 		if di.IsDir() && !strings.HasPrefix(di.Name(), ".") {
 			modes = append(modes, di.Name())
 			idx++
@@ -50,6 +55,7 @@ func (l *Lanes) CmdSelectModeDialog() {
 	lastIndex := l.saveActive()
 	modes, activeModeIndex, err := l.ListValidModes(l.mode)
 	if err != nil {
+		l.app.Stop()
 		log.Fatal(err)
 	}
 	modePage := tview.NewModal().
@@ -71,12 +77,13 @@ func (l *Lanes) CmdRemoveModeDialog() {
 	lastIndex := l.saveActive()
 	modes, _, err := l.ListValidModesRemoveProvided(l.mode)
 	if err != nil {
+		l.app.Stop()
 		log.Fatal(err)
 	}
 	modePage := tview.NewModal().
 		SetTitle(" Remove Mode ").
 		SetText(
-			fmt.Sprintf("CAUTION: About to [red]delete[white] mode '%v'.\n\nTasks of the current mode will be moved into the respective lanes of the selected target mode, or can be removed by selecting 'Archive'.", l.mode)).
+			fmt.Sprintf("CAUTION: About to [red]delete[white] mode '%v'.\n\nTasks of the current mode will be moved into the respective lanes of the selected target mode, or can be removed by selecting 'Archive'.\n\nOther instances of this application showing this mode will close themself.", l.mode)).
 		AddButtons(append(modes, "Archive", "Cancel")).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.cmdRemoveModeAction(buttonIndex, buttonLabel, lastIndex)

@@ -133,6 +133,7 @@ func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
 }
 
 func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, app *tview.Application) {
+	appLocked := false
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -140,9 +141,23 @@ func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, 
 				return
 			}
 
-			// log.Println("event:", event)
+			if filepath.Base(event.Name) == "todo.json" && (event.Has(fsnotify.Remove)) {
+				if !appLocked {
+					app.Lock()
+					appLocked = true
+				}
+			}
+
 			if filepath.Base(event.Name) == "todo.json" && (event.Has(fsnotify.Write) || event.Has(fsnotify.Create)) {
-				content.Read()
+				if appLocked {
+					app.Unlock()
+					appLocked = false
+				}
+				err := content.Read()
+				if err != nil {
+					app.Stop()
+					log.Fatal(err)
+				}
 				lanes.RedrawAllLanes()
 				app.ForceDraw()
 			}
@@ -150,7 +165,8 @@ func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, 
 			if !ok {
 				return
 			}
-			log.Println("error:", err)
+			app.Stop()
+			log.Fatalf("JsonWatcher, error monitoring settings file and folders: %v", err)
 		}
 	}
 }

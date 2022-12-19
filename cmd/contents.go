@@ -98,7 +98,7 @@ func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 		options.Replacement = "_"
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	archiveItemFileName := fmt.Sprintf("%v.%v.json", now.Format("2006-01-02 15_04_05.000"), saveName)
 
@@ -115,7 +115,7 @@ func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string) {
 	c.Items[lane] = append(c.Items[lane][:idx], append([]Item{{title, secondary, ""}}, c.Items[lane][idx:]...)...)
 }
 
-func (c *ToDoContent) Read() {
+func (c *ToDoContent) Read() error {
 	c.readWriteMutex.Lock()
 	defer c.readWriteMutex.Unlock()
 	f, err := os.OpenFile(c.fname, os.O_RDONLY, os.FileMode(int(0600)))
@@ -125,7 +125,11 @@ func (c *ToDoContent) Read() {
 			log.Fatal(err)
 		}
 		f.Close()
+	} else {
+		return err
 	}
+
+	return nil
 }
 
 func (c *ToDoContent) SetFileName(fname, archiveFolder, backupFolder string) {

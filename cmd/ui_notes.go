@@ -34,6 +34,7 @@ func (l *Lanes) CmdEditNote() {
 		l.pages.HidePage("wait")
 	} else {
 		if !l.app.Suspend(l.editNote) {
+			l.app.Stop()
 			log.Fatal("internal suspend error")
 		}
 	}
@@ -149,10 +150,12 @@ func (l *Lanes) editNote() {
 				cmd = exec.Command("notepad", name)
 				err = cmd.Start()
 				if err != nil {
+					l.app.Stop()
 					log.Fatal(err)
 				}
 				err = cmd.Wait()
 				if err != nil {
+					l.app.Stop()
 					log.Fatal(err)
 				}
 				if err == nil {
@@ -170,6 +173,7 @@ func (l *Lanes) editNote() {
 				if err == nil {
 					note_raw, err := os.ReadFile(name)
 					if err != nil {
+						l.app.Stop()
 						log.Fatal(err)
 					}
 					item.Note = string(note_raw)
