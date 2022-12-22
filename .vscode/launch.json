@@ -11,6 +11,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "console": "integratedTerminal",
+            "env": {"VISUAL":"/usr/bin/open -e -W"},
             "args": ["debug"]
         },
     ]

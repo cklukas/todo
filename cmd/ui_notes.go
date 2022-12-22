@@ -146,26 +146,49 @@ func (l *Lanes) editNote() {
 			tmp.Write([]byte(item.Note))
 			tmp.Close()
 			var cmd *exec.Cmd
-			if runtime.GOOS == "windows" {
-				cmd = exec.Command("notepad", name)
+			visualEditorCmd := os.Getenv("VISUAL")
+
+			if runtime.GOOS == "windows" || len(visualEditorCmd) > 0 {
+				editorCmd := os.Getenv("EDITOR")
+				if len(visualEditorCmd) > 0 {
+					editorCmd = visualEditorCmd
+
+				} else {
+					if len(editorCmd) == 0 {
+						editorCmd = "notepad"
+					}
+				}
+				words, err := Split(editorCmd)
+				if err != nil {
+					l.app.Stop()
+					log.Fatal(err)
+				}
+				words = append(words, name)
+				cmd = exec.Command(words[0], words[1:]...)
 				err = cmd.Start()
 				if err != nil {
 					l.app.Stop()
 					log.Fatal(err)
 				}
-				err = cmd.Wait()
-				if err != nil {
-					l.app.Stop()
-					log.Fatal(err)
-				}
-				if err == nil {
-					note_raw, err := os.ReadFile(name)
-					if err == nil {
-						item.Note = string(note_raw)
+				l.app.Suspend(func() {
+					err = cmd.Wait()
+					if err != nil {
+						l.app.Stop()
+						log.Fatal(err)
 					}
-				}
+					if err == nil {
+						note_raw, err := os.ReadFile(name)
+						if err == nil {
+							item.Note = string(note_raw)
+						}
+					}
+				})
 			} else {
-				cmd = exec.Command("vim", name)
+				editorCmd := os.Getenv("EDITOR")
+				if len(editorCmd) == 0 {
+					editorCmd = "vim"
+				}
+				cmd = exec.Command(editorCmd, name)
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr

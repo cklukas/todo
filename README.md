@@ -10,7 +10,7 @@ A simple Kanban board for your terminal.
 * If a non-default mode is used (see below), the files and folders for that mode (`todo.json`, `backup`, `archive`) are saved under `$home/.todo/mode/[mode]`
 
 * Allows input of topic and second description line
-* Provides function to view/edit a longer note for each item in vim
+* Provides function to view/edit a longer note for each item in vim (or other editor, as defined by the `EDITOR` environment variable)
 * All changes are immediately saved (no save command)
 * The application can be started multiple times, modifications performed in one instance are detected in other instances (through monitoring changes to the active `todo.json` file)
 * Use [red], [blue] etc. to colorize your item text
@@ -27,6 +27,15 @@ The app may work with multiple todo lists. By default the mode "main" is activat
 * Linux (release `todo` executable), requires installed `vim` editor for editing longer todo item note text (hotkey 'n')
 * Windows (release `todo.exe`), editing notes (hotkey 'n') is performed in Notepad
 * macOS (arm64) (also uses `vim` as the note text editor, vim is installed by default)
+
+You may set the environment variable `EDITOR`, to use a different editor in Linux, Mac or Windows.
+Alternatively, you may set the environment variable `VISUAL` to set a graphical editor. Once invoked, the user interface of the ToDo Appp will be blocked and a info message will be shown. Once the editor is closed, the ToDo app will read the temporary editor file and proceed operation.
+
+Example call on Mac OS, to use the default text editor GUI to edit notes:
+
+```bash
+$ VISUAL="/usr/bin/open -e -W" todo
+```
 
 ## Screenshots
 
