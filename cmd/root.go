@@ -153,11 +153,13 @@ func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, 
 					app.Unlock()
 					appLocked = false
 				}
+
 				err := content.Read()
 				if err != nil {
 					app.Stop()
 					log.Fatal(err)
 				}
+
 				lanes.RedrawAllLanes()
 				app.ForceDraw()
 			}
@@ -165,6 +167,7 @@ func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, 
 			if !ok {
 				return
 			}
+
 			app.Stop()
 			log.Fatalf("JsonWatcher, error monitoring settings file and folders: %v", err)
 		}
@@ -248,7 +251,7 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 
 var rootCmd = &cobra.Command{
 	Use:          "todo",
-	Short:        "TODO App",
+	Short:        "ToDo App",
 	Long:         "ToDo Main View - optional program argument: mode (e.g. 'private' or 'work')",
 	Version:      AppVersion,
 	SilenceUsage: true,
@@ -257,7 +260,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-
+	// empty
 }
 
 func Execute() {

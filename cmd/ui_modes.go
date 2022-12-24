@@ -60,8 +60,10 @@ func (l *Lanes) CmdSelectModeDialog() {
 	}
 	modePage := tview.NewModal().
 		SetTitle(" Mode Selection ").
-		SetText("Modes allow separation of ToDo lists into categories.\n\nSelect an existing mode, 'Add' a new, or 'Merge/Remove' the current mode (tasks of all lanes are moved to the lanes of another mode or archived)").
-		AddButtons(append(modes, "Add", "Merge/Remove", "Cancel")).
+		// SetText("Modes allow separation of ToDo lists into categories.\n\nSelect an existing mode, 'Add' a new, or 'Merge/Remove' the current mode (tasks of all lanes are moved to the lanes of another mode or archived)").
+		SetText("Modes allow separation of ToDo lists into categories. Select an existing mode from the list:").
+		// AddButtons(append(modes, "Add", "Merge/Remove", "Cancel")).
+		AddButtons(append(modes, "Cancel")).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.cmdSelectModeDialogAction(buttonIndex, buttonLabel, lastIndex)
 		})

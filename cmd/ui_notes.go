@@ -158,6 +158,7 @@ func (l *Lanes) editNote() {
 						editorCmd = "notepad"
 					}
 				}
+
 				words, err := Split(editorCmd)
 				if err != nil {
 					l.app.Stop()
@@ -170,17 +171,17 @@ func (l *Lanes) editNote() {
 					l.app.Stop()
 					log.Fatal(err)
 				}
+
 				l.app.Suspend(func() {
 					err = cmd.Wait()
 					if err != nil {
 						l.app.Stop()
 						log.Fatal(err)
 					}
+
+					note_raw, err := os.ReadFile(name)
 					if err == nil {
-						note_raw, err := os.ReadFile(name)
-						if err == nil {
-							item.Note = string(note_raw)
-						}
+						item.Note = string(note_raw)
 					}
 				})
 			} else {
@@ -188,6 +189,7 @@ func (l *Lanes) editNote() {
 				if len(editorCmd) == 0 {
 					editorCmd = "vim"
 				}
+
 				cmd = exec.Command(editorCmd, name)
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
@@ -199,6 +201,7 @@ func (l *Lanes) editNote() {
 						l.app.Stop()
 						log.Fatal(err)
 					}
+
 					item.Note = string(note_raw)
 				}
 			}
