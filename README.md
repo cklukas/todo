@@ -30,11 +30,11 @@ On Linux, you need to mark the downloaded program as executable (`chmod +x todo`
 
 On Mac OS, for security reasons, the direct start of downloaded applications is blocked. 
 
-(1) First, ensure that you are able to start apps which are not downloaded from App Store. Open the `Systems Settings`, select `Privacy & Security`. On the right scroll down to `Security`and select `Allow applications downloaded from: App Store and identified developers`.
-(2) Move the downloaded executable (`todo_mac_arm64`) to the desired target folder and renamed it to `todo`:
+1. First, ensure that you are able to start apps which are not downloaded from App Store. Open the `Systems Settings`, select `Privacy & Security`. On the right scroll down to `Security`and select `Allow applications downloaded from: App Store and identified developers`.
+2. Move the downloaded executable (`todo_mac_arm64`) to the desired target folder and renamed it to `todo`:
     - `mkdir -p ~/bin; mv ~/Downloads/todo_mac_arm64 ~/bin/todo`)
-(3) Mark the program as executable: `chmod +x ~/bin/todo`
-(4) Open the '~/bin' folder in the finder (GUI), control-click the app icon, then choose Open from the shortcut menu. A dialog will be shown, informing you that the app is not signed, choose `Open` to start the program, you may then close the app by clicking the X window button, or pressing 'q' and then 'Enter'.
+3. Mark the program as executable: `chmod +x ~/bin/todo`
+4. Open the '~/bin' folder in the finder (GUI), control-click the app icon, then choose Open from the shortcut menu. A dialog will be shown, informing you that the app is not signed, choose `Open` to start the program, you may then close the app by clicking the X window button, or pressing 'q' and then 'Enter'.
 
 Once you completed the above steps, the program can be directly opened from the terminal, without additional steps.
 
