@@ -16,6 +16,28 @@ A simple Kanban board for your terminal.
 * Use [red], [blue] etc. to colorize your item text
 * New: Hotkeys F1..F10 are shown in status bar
 
+# Documentation
+
+## Installation / start of the program
+
+After download, you may launch the application from the command line. Depending on your operating systems, additional steps may be needed:
+
+## Linux
+
+On Linux, you need to mark the downloaded program as executable (`chmod +x todo`). To simplify the start, move the program to a directory, which is contained in the search path (e.g., `sudo mv todo /usr/bin/todo`).
+
+## First start on Mac OS (Ventura)
+
+On Mac OS, for security reasons, the direct start of downloaded applications is blocked. 
+
+(1) First, ensure that you are able to start apps which are not downloaded from App Store. Open the `Systems Settings`, select `Privacy & Security`. On the right scroll down to `Security`and select `Allow applications downloaded from: App Store and identified developers`.
+(2) Move the downloaded executable (`todo_mac_arm64`) to the desired target folder and renamed it to `todo`:
+    - `mkdir -p ~/bin; mv ~/Downloads/todo_mac_arm64 ~/bin/todo`)
+(3) Mark the program as executable: `chmod +x ~/bin/todo`
+(4) Open the '~/bin' folder in the finder (GUI), control-click the app icon, then choose Open from the shortcut menu. A dialog will be shown, informing you that the app is not signed, choose `Open` to start the program, you may then close the app by clicking the X window button, or pressing 'q' and then 'Enter'.
+
+Once you completed the above steps, the program can be directly opened from the terminal, without additional steps.
+
 ## Modes
 
 The app may work with multiple todo lists. By default the mode "main" is activated. By launching the program with a single parameter (e.g. 'private' or 'work'), a new todo list is created and used for the particular execution of the program. If no argument is provided, the default list is used, indicated in the status line as 'main' (after the F10 Exit command). From version 1.0.11 on, you can also press 'm' to show the mode selection dialog. This dialog is also shown if you click on the mode name in the status bar. The mode selection dialog allows selection of all existing modes (which do not start with a dot), or by clicking 'Add' the creation of a new mode.
