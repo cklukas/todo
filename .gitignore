@@ -2,7 +2,7 @@
 /todo.exe
 /todo_mac_arm64
 /todo_linux_arm64
-/todo_linux
+/todo_linux_amd64
 /__debug_bin
 oryxBuildBinary
 .DS_Store
