@@ -1,7 +1,8 @@
 /todo
 /todo.exe
 /todo_mac_arm64
-/cmd/ui.go
+/todo_linux_arm64
+/todo_linux
 /__debug_bin
 oryxBuildBinary
 .DS_Store
