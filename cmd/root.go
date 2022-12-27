@@ -190,6 +190,11 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 		log.Fatal(err)
 	}
 
+	_, err = CreateDir(path.Join(usr.HomeDir, todoDir, "mode"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fname := path.Join(usr.HomeDir, todoDir, "todo.json")
 
 	content := new(ToDoContent)
