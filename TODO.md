@@ -1,3 +1,3 @@
-* Archive command crashes app, if no task is selected
-* Remove/merge lane command
-* Remove/merge mode command
+- [x] Archive command crashes app, if no task is selected
+- [x] Remove/merge lane command
+- [x] Remove/merge mode command
