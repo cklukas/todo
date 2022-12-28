@@ -14,7 +14,9 @@ A simple Kanban board for your terminal.
 * All changes are immediately saved (no save command)
 * The application can be started multiple times, modifications performed in one instance are detected in other instances (through monitoring changes to the active `todo.json` file)
 * Use [red], [blue] etc. to colorize your item text
-* New: Hotkeys F1..F10 are shown in status bar
+* Hotkeys F1..F10 are shown in status bar, press F1 to see additional hot keys
+* Number and titles of lanes can be modifed (e.g., 'planned')
+* Press Enter and use arrow keys left / right to move items between lanes (e.g. from 'planned' to 'doing'), press Enter again to exit selection mode
 
 # Documentation
 
