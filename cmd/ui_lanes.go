@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/user"
 	"time"
 
@@ -98,8 +99,18 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 
 	// help := tview.NewModal().
 	help := tview.NewModal()
+	aboutText := fmt.Sprintf("Version: %s", AppVersion)
+	if isLocalDevelopmentVersion(AppVersion) {
+		aboutText += " (local development version)"
+	}
+	aboutText += "\n- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, m - select mode, q - quit"
+	if tag, newer, err := latestReleaseInfo(AppVersion); err == nil && newer {
+		if exe, err := os.Executable(); err == nil {
+			aboutText += fmt.Sprintf("\n\nA newer version %s is available.\nUse \"%s version --update\" to update.", tag, exe)
+		}
+	}
 	help = help.
-		SetText("- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, m - select mode, q - quit").
+		SetText(aboutText).
 		AddButtons([]string{"OK"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.pages.HidePage("help")

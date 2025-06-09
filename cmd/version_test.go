@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"runtime"
 	"testing"
@@ -76,5 +79,36 @@ func TestFileWritable(t *testing.T) {
 	os.Chmod(tmp.Name(), 0666)
 	if !fileWritable(tmp.Name()) {
 		t.Errorf("expected file to be writable with world permissions")
+	}
+}
+
+func TestLatestReleaseInfo(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"tag_name":"v1.0.1"}`)
+	}))
+	defer srv.Close()
+
+	oldURL := latestReleaseURL
+	latestReleaseURL = srv.URL
+	defer func() { latestReleaseURL = oldURL }()
+
+	tag, newer, err := latestReleaseInfo("1.0.0")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tag != "v1.0.1" {
+		t.Errorf("expected tag v1.0.1 got %s", tag)
+	}
+	if !newer {
+		t.Errorf("expected newer true")
+	}
+
+	tag, newer, err = latestReleaseInfo("1.0.1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if newer {
+		t.Errorf("expected newer false")
 	}
 }

@@ -16,6 +16,8 @@ import (
 var checkLatest bool
 var updateApp bool
 
+var latestReleaseURL = "https://api.github.com/repos/cklukas/todo/releases/latest"
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "print version info",
@@ -45,20 +47,31 @@ func init() {
 }
 
 func checkForNewVersion() error {
-	tag, err := getLatestReleaseTag()
+	tag, newer, err := latestReleaseInfo(AppVersion)
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Latest release: %s\n", tag)
-	newer, err := isReleaseNewer(tag, AppVersion)
-	if err == nil && newer {
+	if newer {
 		fmt.Printf("A newer version %s is available. View releases at https://github.com/cklukas/todo/releases\n", tag)
 	}
 	return nil
 }
 
+func latestReleaseInfo(current string) (string, bool, error) {
+	tag, err := getLatestReleaseTag()
+	if err != nil {
+		return "", false, err
+	}
+	newer, err := isReleaseNewer(tag, current)
+	if err != nil {
+		return tag, false, err
+	}
+	return tag, newer, nil
+}
+
 func getLatestReleaseTag() (string, error) {
-	resp, err := http.Get("https://api.github.com/repos/cklukas/todo/releases/latest")
+	resp, err := http.Get(latestReleaseURL)
 	if err != nil {
 		return "", err
 	}
