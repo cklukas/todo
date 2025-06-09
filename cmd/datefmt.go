@@ -2,12 +2,39 @@ package cmd
 
 import (
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
 
 // localeUS returns true if the system locale suggests an US date format.
+func localeUSApple(locale string) bool {
+	l := strings.ToLower(locale)
+	if idx := strings.Index(l, "@rg="); idx != -1 && len(l) >= idx+6 {
+		region := l[idx+4 : idx+6]
+		return region == "us"
+	}
+	if idx := strings.Index(l, "_"); idx != -1 && len(l) >= idx+3 {
+		region := l[idx+1 : idx+3]
+		return region == "us"
+	}
+	return strings.Contains(l, "us")
+}
+
 func localeUS() bool {
+	if runtime.GOOS == "darwin" {
+		locale := os.Getenv("AppleLocale")
+		if locale == "" {
+			out, err := exec.Command("defaults", "read", "-g", "AppleLocale").Output()
+			if err == nil {
+				locale = strings.TrimSpace(string(out))
+			}
+		}
+		if locale != "" {
+			return localeUSApple(locale)
+		}
+	}
 	lang := os.Getenv("LC_TIME")
 	if lang == "" {
 		lang = os.Getenv("LANG")

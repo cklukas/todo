@@ -195,12 +195,20 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 		})
 	}
 	if m.createdBy != "" && m.created != "" {
-		txt := fmt.Sprintf("created by: %s (%s)", m.createdBy, m.created)
-		m.AddTextView("", txt, 50, 1, false, false)
+		tv := tview.NewTextView().SetLabel("Created by:").SetSize(1, 50).SetText(m.createdBy).SetScrollable(false)
+		tv.SetTextColor(tcell.ColorDarkGray)
+		m.AddFormItem(tv)
+		tv2 := tview.NewTextView().SetLabel("Created at:").SetSize(1, 50).SetText(m.created).SetScrollable(false)
+		tv2.SetTextColor(tcell.ColorDarkGray)
+		m.AddFormItem(tv2)
 	}
 	if m.updatedBy != "" && m.updated != "" {
-		txt := fmt.Sprintf("modified by: %s (%s)", m.updatedBy, m.updated)
-		m.AddTextView("", txt, 50, 1, false, false)
+		tv := tview.NewTextView().SetLabel("Modified by:").SetSize(1, 50).SetText(m.updatedBy).SetScrollable(false)
+		tv.SetTextColor(tcell.ColorDarkGray)
+		m.AddFormItem(tv)
+		tv2 := tview.NewTextView().SetLabel("Modified at:").SetSize(1, 50).SetText(m.updated).SetScrollable(false)
+		tv2.SetTextColor(tcell.ColorDarkGray)
+		m.AddFormItem(tv2)
 	}
 
 	itemCount := m.GetFormItemCount()
@@ -219,6 +227,8 @@ func formatDueInput(text string) string {
 		switch {
 		case len(digits) > 4:
 			return digits[:2] + "/" + digits[2:4] + "/" + digits[4:]
+		case len(digits) == 4:
+			return digits[:2] + "/" + digits[2:4] + "/"
 		case len(digits) >= 2:
 			return digits[:2] + "/" + digits[2:]
 		default:
@@ -228,6 +238,8 @@ func formatDueInput(text string) string {
 	switch {
 	case len(digits) > 4:
 		return digits[:2] + "." + digits[2:4] + "." + digits[4:]
+	case len(digits) == 4:
+		return digits[:2] + "." + digits[2:4] + "."
 	case len(digits) >= 2:
 		return digits[:2] + "." + digits[2:]
 	default:
