@@ -4,19 +4,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
+	"os/user"
 	"path"
 	"sync"
 	"time"
 
 	"github.com/flytam/filenamify"
+	"github.com/google/uuid"
 )
 
 type Item struct {
-	Title     string
-	Secondary string
-	Note      string
+	Title         string
+	Secondary     string
+	Note          string
+	Guid          string
+	Priority      int
+	IsArchived    bool
+	Created       string
+	LastUpdate    string
+	Due           string
+	UserName      string
+	UpdatedByName string
+	Mode          string
 }
 
 type ToDoContent struct {
@@ -40,10 +50,12 @@ func (c *ToDoContent) ReadFromFile(fname string) error {
 	}
 
 	err = json.NewDecoder(f).Decode(c)
-
 	f.Close()
-
-	return err
+	if err != nil {
+		return err
+	}
+	c.normalize()
+	return nil
 }
 
 func (c *ToDoContent) GetNumLanes() int {
@@ -102,7 +114,14 @@ func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 	}
 	archiveItemFileName := fmt.Sprintf("%v.%v.json", now.Format("2006-01-02 15_04_05.000"), saveName)
 
-	cnt, _ := json.MarshalIndent(c.Items[lane][idx], "", " ")
+	item := c.Items[lane][idx]
+	item.IsArchived = true
+	item.LastUpdate = now.UTC().Format(time.RFC3339)
+	if usr, errU := user.Current(); errU == nil {
+		item.UpdatedByName = usr.Username
+	}
+
+	cnt, _ := json.MarshalIndent(item, "", " ")
 	err = os.WriteFile(path.Join(c.archiveFolder, archiveItemFileName), cnt, 0644)
 	if err != nil {
 		return err
@@ -112,7 +131,67 @@ func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 }
 
 func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string) {
-	c.Items[lane] = append(c.Items[lane][:idx], append([]Item{{title, secondary, ""}}, c.Items[lane][idx:]...)...)
+	now := time.Now().UTC().Format(time.RFC3339)
+	usr, err := user.Current()
+	userName := ""
+	if err == nil {
+		userName = usr.Username
+	}
+
+	newItem := Item{
+		Title:         title,
+		Secondary:     secondary,
+		Note:          "",
+		Guid:          uuid.NewString(),
+		Priority:      0,
+		IsArchived:    false,
+		Created:       now,
+		LastUpdate:    now,
+		Due:           "",
+		UserName:      userName,
+		UpdatedByName: userName,
+		Mode:          "",
+	}
+
+	c.Items[lane] = append(c.Items[lane][:idx], append([]Item{newItem}, c.Items[lane][idx:]...)...)
+}
+
+func (c *ToDoContent) normalize() {
+	now := time.Now().UTC().Format(time.RFC3339)
+	usr, err := user.Current()
+	userName := ""
+	if err == nil {
+		userName = usr.Username
+	}
+
+	for li := range c.Items {
+		for ii := range c.Items[li] {
+			item := &c.Items[li][ii]
+			if item.Guid == "" {
+				item.Guid = uuid.NewString()
+			}
+			if item.Created == "" {
+				item.Created = now
+			}
+			if item.LastUpdate == "" {
+				if item.Created != "" {
+					item.LastUpdate = item.Created
+				} else {
+					item.LastUpdate = now
+				}
+			}
+			if item.UserName == "" {
+				item.UserName = userName
+			}
+			if item.UpdatedByName == "" {
+				if item.UserName != "" {
+					item.UpdatedByName = item.UserName
+				} else {
+					item.UpdatedByName = userName
+				}
+			}
+		}
+	}
 }
 
 func (c *ToDoContent) Read() error {
@@ -122,14 +201,14 @@ func (c *ToDoContent) Read() error {
 	if err == nil {
 		decoder := json.NewDecoder(f)
 		if err := decoder.Decode(c); err != nil {
-			log.Fatal(err)
+			f.Close()
+			return err
 		}
 		f.Close()
-	} else {
-		return err
+		c.normalize()
+		return nil
 	}
-
-	return nil
+	return err
 }
 
 func (c *ToDoContent) SetFileName(fname, archiveFolder, backupFolder string) {

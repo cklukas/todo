@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"time"
 
@@ -182,6 +183,10 @@ func (l *Lanes) editNote() {
 					note_raw, err := os.ReadFile(name)
 					if err == nil {
 						item.Note = string(note_raw)
+						item.LastUpdate = time.Now().UTC().Format(time.RFC3339)
+						if usr, errU := user.Current(); errU == nil {
+							item.UpdatedByName = usr.Username
+						}
 					}
 				})
 			} else {
@@ -203,6 +208,10 @@ func (l *Lanes) editNote() {
 					}
 
 					item.Note = string(note_raw)
+					item.LastUpdate = time.Now().UTC().Format(time.RFC3339)
+					if usr, errU := user.Current(); errU == nil {
+						item.UpdatedByName = usr.Username
+					}
 				}
 			}
 		}

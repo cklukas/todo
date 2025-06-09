@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os/user"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -181,6 +183,10 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 			itemVal := l.currentItem()
 			itemVal.Title = text
 			itemVal.Secondary = secondary
+			itemVal.LastUpdate = time.Now().UTC().Format(time.RFC3339)
+			if usr, err := user.Current(); err == nil {
+				itemVal.UpdatedByName = usr.Username
+			}
 			l.redrawLane(l.active, item)
 			l.content.Save()
 		}
