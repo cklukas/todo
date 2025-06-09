@@ -18,7 +18,7 @@ func (l *Lanes) CmdAddTask() {
 	l.add.ClearExtras()
 	l.add.SetPriority(2)
 	l.add.SetDue("")
-	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")), "")
+	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format(dueLayout())), "")
 	l.pages.ShowPage("add")
 }
 
@@ -28,13 +28,11 @@ func (l *Lanes) CmdEditTask() {
 		l.edit.ClearExtras()
 		l.edit.SetPriority(item.Priority)
 		l.edit.SetDue(isoToLocal(item.Due))
-		createdTime, _ := time.Parse(time.RFC3339, item.Created)
-		updatedTime, _ := time.Parse(time.RFC3339, item.LastUpdate)
-		createdStr := createdTime.Local().Format("2006-01-02 15:04:05")
+		createdStr := isoTimeToLocal(item.Created)
 		var updatedStr string
 		var updatedBy string
 		if item.LastUpdate != item.Created {
-			updatedStr = updatedTime.Local().Format("2006-01-02 15:04:05")
+			updatedStr = isoTimeToLocal(item.LastUpdate)
 			updatedBy = item.UpdatedByName
 		}
 		l.edit.SetInfo(item.UserName, createdStr, updatedBy, updatedStr)

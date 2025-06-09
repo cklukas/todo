@@ -82,3 +82,22 @@ func localToISO(local string) (string, error) {
 	}
 	return t.Format("2006-01-02"), nil
 }
+
+// dateTimeLayout returns the date and time layout for the current locale.
+// The time format omits seconds and uses 24h style.
+func dateTimeLayout() string {
+	return dueLayout() + " 15:04"
+}
+
+// isoTimeToLocal converts a RFC3339 timestamp to the locale specific date and
+// time format without seconds.
+func isoTimeToLocal(iso string) string {
+	if iso == "" {
+		return ""
+	}
+	t, err := time.Parse(time.RFC3339, iso)
+	if err != nil {
+		return ""
+	}
+	return t.Local().Format(dateTimeLayout())
+}
