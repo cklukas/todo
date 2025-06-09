@@ -150,18 +150,18 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 	m.secondary = secondary
 	m.due = due
 	m.Clear(false)
-	height := 9
-	m.AddInputField("", text, 50, nil, func(text string) {
+
+	m.AddInputField("Task:", text, 50, nil, func(text string) {
 		if len(text) == 0 {
 			text = "(empty)"
 		}
 		m.main = text
 	})
-	m.AddInputField("", secondary, 50, nil, func(text string) {
+	m.AddInputField("Created / due:", secondary, 50, nil, func(text string) {
 		m.secondary = text
 	})
 	if m.showDue {
-		dateField := tview.NewInputField().SetLabel("Due:").SetFieldWidth(10)
+		dateField := tview.NewInputField().SetLabel("Due:").SetFieldWidth(10).SetPlaceholder("dd.mm.yyyy")
 		updating := false
 		dateField.SetAcceptanceFunc(func(text string, ch rune) bool {
 			if ch == 0 {
@@ -171,22 +171,13 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 				return false
 			}
 			digits := strings.ReplaceAll(text, ".", "")
-			return len(digits) < 8
+			return len(digits) <= 8
 		})
 		dateField.SetChangedFunc(func(text string) {
 			if updating {
 				return
 			}
-			digits := strings.ReplaceAll(text, ".", "")
-			if len(digits) > 8 {
-				digits = digits[:8]
-			}
-			formatted := digits
-			if len(digits) > 4 {
-				formatted = digits[:2] + "." + digits[2:4] + "." + digits[4:]
-			} else if len(digits) > 2 {
-				formatted = digits[:2] + "." + digits[2:]
-			}
+			formatted := formatDueInput(text)
 			if formatted != text {
 				updating = true
 				dateField.SetText(formatted)
@@ -196,26 +187,42 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 		})
 		dateField.SetText(due)
 		m.AddFormItem(dateField)
-		height++
 	}
 	if m.showPriority {
 		options := []string{"1 (high)", "2 (normal)", "3 (low)", "4 (idle)"}
 		m.AddDropDown("Priority:", options, m.priority-1, func(option string, index int) {
 			m.priority = index + 1
 		})
-		height++
 	}
 	if m.createdBy != "" && m.created != "" {
 		txt := fmt.Sprintf("created by: %s (%s)", m.createdBy, m.created)
 		m.AddTextView("", txt, 50, 1, false, false)
-		height++
 	}
 	if m.updatedBy != "" && m.updated != "" {
 		txt := fmt.Sprintf("modified by: %s (%s)", m.updatedBy, m.updated)
 		m.AddTextView("", txt, 50, 1, false, false)
-		height++
 	}
-	m.DialogHeight = height
+
+	itemCount := m.GetFormItemCount()
+	m.DialogHeight = 2*itemCount + 5
+}
+
+// formatDueInput formats a date input so that dots are inserted after day and
+// month. Input may already contain dots and may be partially entered.
+// At most 8 digits are considered.
+func formatDueInput(text string) string {
+	digits := strings.ReplaceAll(text, ".", "")
+	if len(digits) > 8 {
+		digits = digits[:8]
+	}
+	switch {
+	case len(digits) > 4:
+		return digits[:2] + "." + digits[2:4] + "." + digits[4:]
+	case len(digits) >= 2:
+		return digits[:2] + "." + digits[2:]
+	default:
+		return digits
+	}
 }
 
 // SetPriority enables a priority dropdown with the given value (1-4).
