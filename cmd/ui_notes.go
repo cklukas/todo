@@ -12,17 +12,44 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+func isoToLocal(iso string) string {
+	if iso == "" {
+		return ""
+	}
+	t, err := time.Parse("2006-01-02", iso)
+	if err != nil {
+		return ""
+	}
+	return t.Format("02.01.2006")
+}
+
 func (l *Lanes) CmdAddTask() {
 	l.saveActive()
 	now := time.Now()
-	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")))
+	l.add.ClearExtras()
+	l.add.SetPriority(2)
+	l.add.SetDue("")
+	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format("2006-01-02")), "")
 	l.pages.ShowPage("add")
 }
 
 func (l *Lanes) CmdEditTask() {
 	l.saveActive()
 	if item := l.currentItem(); item != nil {
-		l.edit.SetValue(item.Title, item.Secondary)
+		l.edit.ClearExtras()
+		l.edit.SetPriority(item.Priority)
+		l.edit.SetDue(isoToLocal(item.Due))
+		createdTime, _ := time.Parse(time.RFC3339, item.Created)
+		updatedTime, _ := time.Parse(time.RFC3339, item.LastUpdate)
+		createdStr := createdTime.Local().Format("2006-01-02 15:04:05")
+		var updatedStr string
+		var updatedBy string
+		if item.LastUpdate != item.Created {
+			updatedStr = updatedTime.Local().Format("2006-01-02 15:04:05")
+			updatedBy = item.UpdatedByName
+		}
+		l.edit.SetInfo(item.UserName, createdStr, updatedBy, updatedStr)
+		l.edit.SetValue(item.Title, item.Secondary, isoToLocal(item.Due))
 		l.pages.ShowPage("edit")
 	}
 }

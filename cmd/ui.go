@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/rivo/tview"
 )
@@ -47,8 +48,13 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 	}
 
 	l.lanes[laneIndex].Clear()
+	now := time.Now()
 	for _, item := range l.content.GetLaneItems(laneIndex) {
-		l.lanes[laneIndex].AddItem(item.Title, item.Secondary, 0, nil)
+		title := item.Title
+		if suffix := dueSuffix(item.Due, now); suffix != "" {
+			title += " " + suffix
+		}
+		l.lanes[laneIndex].AddItem(title, item.Secondary, 0, nil)
 	}
 
 	num := l.lanes[laneIndex].GetItemCount()
@@ -68,6 +74,27 @@ func normPos(pos, length int) int {
 		pos %= length
 	}
 	return pos
+}
+
+func dueSuffix(due string, now time.Time) string {
+	if len(due) == 0 {
+		return ""
+	}
+	d, err := time.Parse("2006-01-02", due)
+	if err != nil {
+		return ""
+	}
+	d = d.In(now.Location())
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	days := int(d.Sub(today).Hours() / 24)
+	switch days {
+	case 0:
+		return "[due!]"
+	case 1:
+		return "[tomorrow]"
+	default:
+		return ""
+	}
 }
 
 func (l *Lanes) setActive() {
