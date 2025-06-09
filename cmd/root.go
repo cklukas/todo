@@ -109,7 +109,7 @@ func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
 	bExit.SetBackgroundColor(tcell.ColorLightGray)
 	bExit.SetSelectedFunc(lanes.CmdExit)
 
-	bMode := tview.NewButton("[blue::-]" + mode) // [blue::-]F12
+	bMode := tview.NewButton("[blue::-]" + mode)
 	bMode.SetBackgroundColor(tcell.ColorLightGray)
 	bMode.SetSelectedFunc(lanes.CmdSelectModeDialog)
 
