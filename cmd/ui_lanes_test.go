@@ -36,8 +36,7 @@ func TestNoSelectionChangeDuringAdd(t *testing.T) {
 
 	l.CmdAddTask()
 
-	x, y, _, _ := l.lanes[0].GetInnerRect()
-	event := tcell.NewEventMouse(x, y+1, tcell.Button1, 0)
+	event := tcell.NewEventMouse(50, 50, tcell.Button1, 0)
 	l.pages.MouseHandler()(tview.MouseLeftClick, event, func(p tview.Primitive) {})
 
 	if l.lanes[0].GetCurrentItem() != 0 {
@@ -69,5 +68,66 @@ func TestEditTaskFocus(t *testing.T) {
 
 	if app.GetFocus() != l.edit.titleField {
 		t.Fatalf("focus not on edit task dialog")
+	}
+}
+
+func TestMouseCaptureDuringAdd(t *testing.T) {
+	c := &ToDoContent{}
+	c.InitializeNew()
+	c.AddItem(0, 0, "task 1", "", 2, "", "")
+	app := tview.NewApplication()
+	called := false
+	app.SetMouseCapture(func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+		called = true
+		return event, action
+	})
+	l := NewLanes(c, app, "", t.TempDir())
+
+	l.CmdAddTask()
+	event := tcell.NewEventMouse(50, 50, tcell.Button1, 0)
+	ev, _ := app.GetMouseCapture()(event, tview.MouseLeftClick)
+	if ev != nil {
+		t.Fatalf("mouse event not swallowed")
+	}
+	if called {
+		t.Fatalf("original capture called during dialog")
+	}
+
+	l.add.done("", "", false)
+	ev, _ = app.GetMouseCapture()(event, tview.MouseLeftClick)
+	if ev == nil {
+		t.Fatalf("mouse event swallowed after dialog")
+	}
+}
+
+func TestInputCaptureDuringAdd(t *testing.T) {
+	c := &ToDoContent{}
+	c.InitializeNew()
+	app := tview.NewApplication()
+	called := false
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		called = true
+		return nil
+	})
+	l := NewLanes(c, app, "", t.TempDir())
+
+	l.CmdAddTask()
+	key := tcell.NewEventKey(tcell.KeyF1, rune(0), tcell.ModNone)
+	ret := app.GetInputCapture()(key)
+	if ret != key {
+		t.Fatalf("input capture modified event")
+	}
+	if called {
+		t.Fatalf("original input capture called during dialog")
+	}
+
+	l.add.done("", "", false)
+	called = false
+	ret = app.GetInputCapture()(key)
+	if ret != nil {
+		t.Fatalf("expected nil from original capture")
+	}
+	if !called {
+		t.Fatalf("original input capture not called after dialog")
 	}
 }

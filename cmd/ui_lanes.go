@@ -41,7 +41,13 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 	l := &Lanes{"", 0, todoDirModes, mode, content, make([]*tview.List, content.GetNumLanes()), 0, 0, false, tview.NewPages(), app, false,
 		NewModalInput("Add Task"),
 		NewModalInput("Edit Task"),
-		NewModalInputMode("Add Mode", todoDirModes), nil}
+		NewModalInputMode("Add Mode", todoDirModes), nil,
+		false, nil, nil, nil}
+
+	l.origInputCapture = app.GetInputCapture()
+	app.SetInputCapture(l.appInputCapture)
+	l.origMouseCapture = app.GetMouseCapture()
+	app.SetMouseCapture(l.appMouseCapture)
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
@@ -180,8 +186,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 			l.redrawLane(l.active, item)
 			content.Save()
 		}
-		l.pages.HidePage("add")
-		l.setActive()
+		l.hideDialog("add")
 	})
 	l.pages.AddPage("add", modal(l.add, 0, 0), true, false)
 
@@ -215,8 +220,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 			l.redrawLane(l.active, item)
 			l.content.Save()
 		}
-		l.pages.HidePage("edit")
-		l.setActive()
+		l.hideDialog("edit")
 	})
 	l.pages.AddPage("edit", modal(l.edit, 0, 0), false, false)
 
