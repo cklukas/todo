@@ -20,7 +20,7 @@ func TestInsertNewLane(t *testing.T) {
 func TestMoveItem(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "task", "", 2, "")
+	c.AddItem(0, 0, "task", "", 2, "", "")
 	c.MoveItem(0, 0, 1, 0)
 	if len(c.Items[0]) != 0 {
 		t.Fatalf("item not removed from source")
@@ -46,7 +46,7 @@ func TestRemoveLane(t *testing.T) {
 func TestGetLaneTitle(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "task", "", 2, "")
+	c.AddItem(0, 0, "task", "", 2, "", "")
 	title := c.GetLaneTitle(0)
 	if title != " To Do (1) " {
 		t.Fatalf("unexpected title: %s", title)
@@ -56,7 +56,7 @@ func TestGetLaneTitle(t *testing.T) {
 func TestAddItemPriority(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "p task", "", 3, "")
+	c.AddItem(0, 0, "p task", "", 3, "", "")
 	if c.Items[0][0].Priority != 3 {
 		t.Fatalf("expected priority 3 got %d", c.Items[0][0].Priority)
 	}
@@ -65,7 +65,7 @@ func TestAddItemPriority(t *testing.T) {
 func TestAddItemDue(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "due task", "", 2, "2025-06-10")
+	c.AddItem(0, 0, "due task", "", 2, "2025-06-10", "")
 	if c.Items[0][0].Due != "2025-06-10" {
 		t.Fatalf("expected due 2025-06-10 got %s", c.Items[0][0].Due)
 	}

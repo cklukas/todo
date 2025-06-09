@@ -51,6 +51,9 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 	now := time.Now()
 	for _, item := range l.content.GetLaneItems(laneIndex) {
 		title := item.Title
+		if item.Color != "" {
+			title = "[" + item.Color + "]" + title
+		}
 		if suffix := dueSuffix(item.Due, now); suffix != "" {
 			title += " " + suffix
 		}
