@@ -61,7 +61,25 @@ func (c *ColorInput) GetFieldHeight() int {
 // SetFinishedFunc installs a handler for the input field.
 func (c *ColorInput) SetFinishedFunc(handler func(key tcell.Key)) tview.FormItem {
 	c.input.SetFinishedFunc(handler)
+	c.dropdown.SetDoneFunc(handler)
 	return c
+}
+
+// InputHandler handles tab navigation between input field and dropdown.
+func (c *ColorInput) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return c.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		if c.input.HasFocus() && event.Key() == tcell.KeyTab {
+			setFocus(c.dropdown)
+			return
+		}
+		if c.dropdown.HasFocus() && event.Key() == tcell.KeyBacktab {
+			setFocus(c.input)
+			return
+		}
+		if handler := c.Flex.InputHandler(); handler != nil {
+			handler(event, setFocus)
+		}
+	})
 }
 
 // removePrefix returns text without a leading color prefix.
