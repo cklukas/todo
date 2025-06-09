@@ -66,7 +66,7 @@ func (l *Lanes) CmdSelectModeDialog() {
 		// SetText("Modes allow separation of ToDo lists into categories.\n\nSelect an existing mode, 'Add' a new, or 'Merge/Remove' the current mode (tasks of all lanes are moved to the lanes of another mode or archived)").
 		SetText("Modes allow separation of ToDo lists into categories. Select an existing mode from the list:").
 		// AddButtons(append(modes, "Add", "Merge/Remove", "Cancel")).
-		AddButtons(append(modes, "Add", "Cancel")).
+		AddButtons(append(modes, " Add...", "Cancel")).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			l.cmdSelectModeDialogAction(buttonIndex, buttonLabel, lastIndex)
 		})
@@ -108,7 +108,7 @@ func (l *Lanes) cmdRemoveModeAction(buttonIndex int, buttonLabel string, lastInd
 func (l *Lanes) cmdSelectModeDialogAction(buttonIndex int, buttonLabel string, lastIndex int) {
 	if buttonIndex >= 0 {
 		switch buttonLabel {
-		case "Add":
+		case " Add...":
 			l.pages.HidePage("mode")
 			l.pages.ShowPage("addMode")
 			return
