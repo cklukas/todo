@@ -182,7 +182,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 		l.pages.HidePage("add")
 		l.setActive()
 	})
-	l.pages.AddPage("add", l.add, false, false)
+	l.pages.AddPage("add", modal(l.add, 0, 0), true, false)
 
 	l.addMode.SetDoneFunc(func(text string, secondary string, success bool) {
 		l.pages.HidePage("addMode")
@@ -216,7 +216,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 		l.pages.HidePage("edit")
 		l.setActive()
 	})
-	l.pages.AddPage("edit", modal(l.edit), true, false)
+	l.pages.AddPage("edit", modal(l.edit, 0, 0), false, false)
 
 	return l
 }
