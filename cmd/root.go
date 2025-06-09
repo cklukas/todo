@@ -31,10 +31,25 @@ func CreateDir(path string) (string, error) {
 var AppVersion string = ""
 
 func main(cmd *cobra.Command, args []string) error {
-	todoDir := ".todo"
+	baseTodoDir := ".todo"
+	todoDir := baseTodoDir
 	mode := "main"
 
-	todoDirModes := path.Join(todoDir, "mode")
+	usr, errU := user.Current()
+	if errU != nil {
+		log.Fatal(errU)
+	}
+
+	if len(args) == 0 {
+		if m, err := loadLastModeFromSettings(usr.HomeDir); err == nil && len(m) > 0 {
+			mode = m
+			if mode != "main" {
+				todoDir = path.Join(baseTodoDir, "mode", mode)
+			}
+		}
+	}
+
+	todoDirModes := path.Join(baseTodoDir, "mode")
 
 	if len(args) == 1 && args[0] != "main" {
 		saveName, err := filenamify.FilenamifyV2(args[0], func(options *filenamify.Options) {
@@ -59,8 +74,12 @@ func main(cmd *cobra.Command, args []string) error {
 		if len(nextMode) == 0 {
 			break
 		}
+		// store selected mode for future runs
+		if err := saveLastModeToSettings(usr.HomeDir, nextMode); err != nil {
+			log.Print(err)
+		}
 		if nextMode == "main" {
-			todoDir = ".todo"
+			todoDir = baseTodoDir
 			saveName = "main"
 			continue
 		}
