@@ -1,6 +1,10 @@
 package cmd
 
-import "testing"
+import (
+	"os"
+	"runtime"
+	"testing"
+)
 
 func TestIsReleaseNewer(t *testing.T) {
 	tests := []struct {
@@ -42,5 +46,31 @@ func TestLocalDevelopmentVersion(t *testing.T) {
 		if parts[i] != v {
 			t.Errorf("expected part %d to be %d got %d", i, v, parts[i])
 		}
+	}
+}
+
+func TestAssetNameForCurrentOS(t *testing.T) {
+	asset, err := assetNameForCurrentOS()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if runtime.GOOS == "linux" && runtime.GOARCH == "amd64" && asset != "todo_linux_amd64" {
+		t.Errorf("unexpected asset name %s", asset)
+	}
+}
+
+func TestFileWritable(t *testing.T) {
+	tmp, err := os.CreateTemp("", "fw")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tmp.Close()
+	defer os.Remove(tmp.Name())
+	if !fileWritable(tmp.Name()) {
+		t.Errorf("expected file to be writable")
+	}
+	os.Chmod(tmp.Name(), 0444)
+	if fileWritable(tmp.Name()) {
+		t.Errorf("expected file to be non writable")
 	}
 }
