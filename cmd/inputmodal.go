@@ -234,20 +234,16 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 		})
 	}
 	if m.createdBy != "" && m.created != "" {
-		tv := tview.NewTextView().SetLabel("Created by:").SetSize(1, 50).SetText(m.createdBy).SetScrollable(false)
+		txt := fmt.Sprintf("%s (%s)", m.created, m.createdBy)
+		tv := tview.NewTextView().SetLabel("Created:").SetSize(1, 50).SetText(txt).SetScrollable(false)
 		tv.SetTextColor(tcell.ColorDarkGray)
 		m.AddFormItem(tv)
-		tv2 := tview.NewTextView().SetLabel("Created at:").SetSize(1, 50).SetText(m.created).SetScrollable(false)
-		tv2.SetTextColor(tcell.ColorDarkGray)
-		m.AddFormItem(tv2)
 	}
 	if m.updatedBy != "" && m.updated != "" {
-		tv := tview.NewTextView().SetLabel("Modified by:").SetSize(1, 50).SetText(m.updatedBy).SetScrollable(false)
+		txt := fmt.Sprintf("%s (%s)", m.updated, m.updatedBy)
+		tv := tview.NewTextView().SetLabel("Modified:").SetSize(1, 50).SetText(txt).SetScrollable(false)
 		tv.SetTextColor(tcell.ColorDarkGray)
 		m.AddFormItem(tv)
-		tv2 := tview.NewTextView().SetLabel("Modified at:").SetSize(1, 50).SetText(m.updated).SetScrollable(false)
-		tv2.SetTextColor(tcell.ColorDarkGray)
-		m.AddFormItem(tv2)
 	}
 
 	itemCount := m.GetFormItemCount()
