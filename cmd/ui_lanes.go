@@ -216,7 +216,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 		l.pages.HidePage("edit")
 		l.setActive()
 	})
-	l.pages.AddPage("edit", l.edit, false, false)
+	l.pages.AddPage("edit", l.edit, true, false)
 
 	return l
 }
