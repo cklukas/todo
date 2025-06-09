@@ -222,7 +222,7 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 		}
 		l.hideDialog("edit")
 	})
-	l.pages.AddPage("edit", modal(l.edit, 0, 0), false, false)
+	l.pages.AddPage("edit", modal(l.edit, 0, 0), true, false)
 
 	return l
 }
