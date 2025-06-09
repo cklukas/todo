@@ -130,7 +130,7 @@ func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 	return nil
 }
 
-func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string) {
+func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string, priority int, due string) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	usr, err := user.Current()
 	userName := ""
@@ -143,11 +143,11 @@ func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string) {
 		Secondary:     secondary,
 		Note:          "",
 		Guid:          uuid.NewString(),
-		Priority:      0,
+		Priority:      priority,
 		IsArchived:    false,
 		Created:       now,
 		LastUpdate:    now,
-		Due:           "",
+		Due:           due,
 		UserName:      userName,
 		UpdatedByName: userName,
 		Mode:          "",

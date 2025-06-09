@@ -158,7 +158,9 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 			if len(text) == 0 {
 				text = "(empty)"
 			}
-			l.content.AddItem(l.active, item, text, secondary)
+			prio := l.add.GetPriority()
+			due := l.add.GetDueISO()
+			l.content.AddItem(l.active, item, text, secondary, prio, due)
 			l.redrawLane(l.active, item)
 			content.Save()
 		}
@@ -183,6 +185,8 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 			itemVal := l.currentItem()
 			itemVal.Title = text
 			itemVal.Secondary = secondary
+			itemVal.Priority = l.edit.GetPriority()
+			itemVal.Due = l.edit.GetDueISO()
 			itemVal.LastUpdate = time.Now().UTC().Format(time.RFC3339)
 			if usr, err := user.Current(); err == nil {
 				itemVal.UpdatedByName = usr.Username

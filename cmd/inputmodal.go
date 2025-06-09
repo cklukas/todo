@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -14,13 +16,21 @@ type ModalInput struct {
 	frame        *tview.Frame
 	main         string
 	secondary    string
+	due          string
+	priority     int
+	showPriority bool
+	showDue      bool
+	createdBy    string
+	created      string
+	updatedBy    string
+	updated      string
 	done         func(string, string, bool)
 }
 
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
 
-	m := &ModalInput{form, 9, tview.NewFrame(form), "", "", nil}
+	m := &ModalInput{form, 9, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -63,7 +73,7 @@ func NewModalInput(title string) *ModalInput {
 
 func NewModalInputMode(title, modeDirectory string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{form, 8, tview.NewFrame(form), "", "", nil}
+	m := &ModalInput{form, 8, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
 
 	form.AddInputField("Mode:", "", 50, nil, func(text string) {
 		m.main = text
@@ -99,7 +109,7 @@ func NewModalInputMode(title, modeDirectory string) *ModalInput {
 
 func NewModalInputLane(title, laneDescription string, dialogHeight int, initialInput1 string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{form, dialogHeight, tview.NewFrame(form), "", "", nil}
+	m := &ModalInput{form, dialogHeight, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
 	m.main = initialInput1
 
 	form.AddInputField("Lane:", initialInput1, 50, nil, func(text string) {
@@ -135,10 +145,12 @@ func NewModalInputLane(title, laneDescription string, dialogHeight int, initialI
 }
 
 // SetValue sets the current value in the item
-func (m *ModalInput) SetValue(text string, secondary string) {
+func (m *ModalInput) SetValue(text string, secondary string, due string) {
 	m.main = text
 	m.secondary = secondary
+	m.due = due
 	m.Clear(false)
+	height := 9
 	m.AddInputField("", text, 50, nil, func(text string) {
 		if len(text) == 0 {
 			text = "(empty)"
@@ -148,6 +160,116 @@ func (m *ModalInput) SetValue(text string, secondary string) {
 	m.AddInputField("", secondary, 50, nil, func(text string) {
 		m.secondary = text
 	})
+	if m.showDue {
+		dateField := tview.NewInputField().SetLabel("Due:").SetFieldWidth(10)
+		updating := false
+		dateField.SetAcceptanceFunc(func(text string, ch rune) bool {
+			if ch == 0 {
+				return true
+			}
+			if ch < '0' || ch > '9' {
+				return false
+			}
+			digits := strings.ReplaceAll(text, ".", "")
+			return len(digits) < 8
+		})
+		dateField.SetChangedFunc(func(text string) {
+			if updating {
+				return
+			}
+			digits := strings.ReplaceAll(text, ".", "")
+			if len(digits) > 8 {
+				digits = digits[:8]
+			}
+			formatted := digits
+			if len(digits) > 4 {
+				formatted = digits[:2] + "." + digits[2:4] + "." + digits[4:]
+			} else if len(digits) > 2 {
+				formatted = digits[:2] + "." + digits[2:]
+			}
+			if formatted != text {
+				updating = true
+				dateField.SetText(formatted)
+				updating = false
+			}
+			m.due = formatted
+		})
+		dateField.SetText(due)
+		m.AddFormItem(dateField)
+		height++
+	}
+	if m.showPriority {
+		options := []string{"1 (high)", "2 (normal)", "3 (low)", "4 (idle)"}
+		m.AddDropDown("Priority:", options, m.priority-1, func(option string, index int) {
+			m.priority = index + 1
+		})
+		height++
+	}
+	if m.createdBy != "" && m.created != "" {
+		txt := fmt.Sprintf("created by: %s (%s)", m.createdBy, m.created)
+		m.AddTextView("", txt, 50, 1, false, false)
+		height++
+	}
+	if m.updatedBy != "" && m.updated != "" {
+		txt := fmt.Sprintf("modified by: %s (%s)", m.updatedBy, m.updated)
+		m.AddTextView("", txt, 50, 1, false, false)
+		height++
+	}
+	m.DialogHeight = height
+}
+
+// SetPriority enables a priority dropdown with the given value (1-4).
+func (m *ModalInput) SetPriority(value int) {
+	if value < 1 || value > 4 {
+		value = 2
+	}
+	m.priority = value
+	m.showPriority = true
+}
+
+// SetDue enables a due date input field with the given value (dd.mm.yyyy).
+func (m *ModalInput) SetDue(date string) {
+	m.due = date
+	m.showDue = true
+}
+
+// GetDueISO returns the due date in ISO format or empty if not set.
+func (m *ModalInput) GetDueISO() string {
+	if !m.showDue || m.due == "" {
+		return ""
+	}
+	t, err := time.Parse("02.01.2006", m.due)
+	if err != nil {
+		return ""
+	}
+	return t.Format("2006-01-02")
+}
+
+// GetPriority returns the currently selected priority value.
+func (m *ModalInput) GetPriority() int {
+	if !m.showPriority {
+		return 0
+	}
+	return m.priority
+}
+
+// SetInfo sets the creation and modification information to be shown.
+func (m *ModalInput) SetInfo(createdBy, created, updatedBy, updated string) {
+	m.createdBy = createdBy
+	m.created = created
+	m.updatedBy = updatedBy
+	m.updated = updated
+}
+
+// ClearExtras disables priority dropdown and info lines.
+func (m *ModalInput) ClearExtras() {
+	m.showPriority = false
+	m.showDue = false
+	m.createdBy = ""
+	m.created = ""
+	m.updatedBy = ""
+	m.updated = ""
+	m.due = ""
 }
 
 // SetDoneFunc sets the done func for this input.
