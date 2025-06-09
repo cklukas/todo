@@ -6,6 +6,8 @@ replace github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8 => github.com/c
 
 require github.com/spf13/cobra v1.6.1
 
+require github.com/google/uuid v1.6.0
+
 require (
 	github.com/flytam/filenamify v1.1.2
 	github.com/fsnotify/fsnotify v1.6.0
