@@ -385,3 +385,42 @@ func (m *ModalInput) Draw(screen tcell.Screen) {
 	m.frame.SetRect(x, y, width, height)
 	m.frame.Draw(screen)
 }
+
+// Focus delegates focus to the internal form.
+func (m *ModalInput) Focus(delegate func(p tview.Primitive)) {
+	delegate(m.Form)
+}
+
+// HasFocus returns whether the form has focus.
+func (m *ModalInput) HasFocus() bool {
+	return m.Form.HasFocus()
+}
+
+// SetFocus passes the focus index to the embedded form.
+func (m *ModalInput) SetFocus(index int) *ModalInput {
+	m.Form.SetFocus(index)
+	return m
+}
+
+// MouseHandler forwards mouse events to the form and captures clicks inside the dialog.
+func (m *ModalInput) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+	return m.WrapMouseHandler(func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
+		consumed, capture = m.Form.MouseHandler()(action, event, setFocus)
+		if !consumed && action == tview.MouseLeftDown && m.InRect(event.Position()) {
+			setFocus(m)
+			consumed = true
+		}
+		return
+	})
+}
+
+// InputHandler returns the handler for this primitive.
+func (m *ModalInput) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return m.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+		if m.frame.HasFocus() {
+			if handler := m.frame.InputHandler(); handler != nil {
+				handler(event, setFocus)
+			}
+		}
+	})
+}
