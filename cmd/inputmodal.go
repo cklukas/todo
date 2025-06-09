@@ -20,6 +20,9 @@ type ModalInput struct {
 	priority     int
 	showPriority bool
 	showDue      bool
+	color        string
+	showColor    bool
+	colors       []string
 	createdBy    string
 	created      string
 	updatedBy    string
@@ -49,7 +52,7 @@ func (m *ModalInput) updateOKButton() {
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
 
-	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
+	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, color: "", showColor: false, colors: []string{"default", "blue", "green", "red", "yellow"}, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -176,13 +179,42 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 	m.Clear(false)
 
 	var titleField *tview.InputField
-	m.Form, titleField = m.Form.AddInputField("Title:", text, 50, nil, func(text string) {
-		if len(text) == 0 {
-			text = "(empty)"
+	if m.showColor {
+		ci := NewColorInput("Title:", m.colors)
+		titleField = ci.input
+		titleField.SetText(applyPrefix(text, m.color))
+		titleField.SetChangedFunc(func(text string) {
+			if len(text) == 0 {
+				text = "(empty)"
+			}
+			m.main = text
+			m.updateOKButton()
+		})
+		idx := 0
+		for i, c := range m.colors {
+			if c == m.color {
+				idx = i
+				break
+			}
 		}
-		m.main = text
-		m.updateOKButton()
-	})
+		ci.dropdown.SetCurrentOption(idx)
+		ci.dropdown.SetSelectedFunc(func(option string, index int) {
+			m.color = m.colors[index]
+			base := removePrefix(titleField.GetText())
+			newText := applyPrefix(base, m.color)
+			titleField.SetText(newText)
+			m.main = newText
+		})
+		m.AddFormItem(ci)
+	} else {
+		m.Form, titleField = m.Form.AddInputField("Title:", text, 50, nil, func(text string) {
+			if len(text) == 0 {
+				text = "(empty)"
+			}
+			m.main = text
+			m.updateOKButton()
+		})
+	}
 	m.titleField = titleField
 	m.AddInputField("Details:", secondary, 50, nil, func(text string) {
 		m.secondary = text
@@ -302,6 +334,12 @@ func (m *ModalInput) SetPriority(value int) {
 	m.showPriority = true
 }
 
+// SetColor enables a color dropdown with the given value.
+func (m *ModalInput) SetColor(color string) {
+	m.color = color
+	m.showColor = true
+}
+
 // SetDue enables a due date input field with the given value using locale formatting.
 func (m *ModalInput) SetDue(date string) {
 	m.due = date
@@ -337,6 +375,14 @@ func (m *ModalInput) GetPriority() int {
 	return m.priority
 }
 
+// GetColor returns the currently selected color value.
+func (m *ModalInput) GetColor() string {
+	if !m.showColor {
+		return ""
+	}
+	return m.color
+}
+
 // SetInfo sets the creation and modification information to be shown.
 func (m *ModalInput) SetInfo(createdBy, created, updatedBy, updated string) {
 	m.createdBy = createdBy
@@ -349,6 +395,8 @@ func (m *ModalInput) SetInfo(createdBy, created, updatedBy, updated string) {
 func (m *ModalInput) ClearExtras() {
 	m.showPriority = false
 	m.showDue = false
+	m.showColor = false
+	m.color = ""
 	m.createdBy = ""
 	m.created = ""
 	m.updatedBy = ""
