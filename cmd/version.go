@@ -17,7 +17,11 @@ var versionCmd = &cobra.Command{
 	Short: "print version info",
 	Long:  `prints version info based on CI/CD pipeline info, used within 'build.sh'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(AppVersion)
+		v := AppVersion
+		if isLocalDevelopmentVersion(AppVersion) {
+			v += " (local development version)"
+		}
+		fmt.Println(v)
 		if checkLatest {
 			if err := checkForNewVersion(); err != nil {
 				return err
@@ -37,11 +41,9 @@ func checkForNewVersion() error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Latest release: %s\n", tag)
 	newer, err := isReleaseNewer(tag, AppVersion)
-	if err != nil {
-		return err
-	}
-	if newer {
+	if err == nil && newer {
 		fmt.Printf("A newer version %s is available. View releases at https://github.com/cklukas/todo/releases\n", tag)
 	}
 	return nil
@@ -67,9 +69,16 @@ func getLatestReleaseTag() (string, error) {
 
 func versionParts(v string) ([]int, error) {
 	v = strings.TrimPrefix(v, "v")
+	if v == "" {
+		return []int{0}, nil
+	}
 	parts := strings.Split(v, ".")
 	res := make([]int, len(parts))
 	for i, p := range parts {
+		if p == "" {
+			res[i] = 0
+			continue
+		}
 		n, err := strconv.Atoi(p)
 		if err != nil {
 			return nil, err
@@ -107,4 +116,8 @@ func isReleaseNewer(release, current string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func isLocalDevelopmentVersion(v string) bool {
+	return v == "" || strings.Contains(v, "..")
 }
