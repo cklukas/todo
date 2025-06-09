@@ -61,6 +61,16 @@ Example call on Mac OS, to use the default text editor GUI to edit notes:
 $ VISUAL="/usr/bin/open -e -W" todo
 ```
 
+## Running tests
+
+Unit tests can be executed with the provided helper script:
+
+```bash
+./test.sh
+```
+
+The script simply calls `go test ./...` and will run all tests in the project.
+
 ## Screenshots
 
 Remark: The current version shows available commands and active mode (see above), in a status line at the bottom of the screen.
