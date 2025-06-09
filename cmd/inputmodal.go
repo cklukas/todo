@@ -24,13 +24,32 @@ type ModalInput struct {
 	created      string
 	updatedBy    string
 	updated      string
+	titleField   *tview.InputField
+	okButton     *tview.Button
 	done         func(string, string, bool)
+}
+
+func (m *ModalInput) updateOKButton() {
+	if m.okButton == nil {
+		return
+	}
+	if len(m.main) == 0 {
+		m.okButton.SetLabelColor(tcell.ColorDarkGray)
+		m.okButton.SetSelectedFunc(func() {})
+	} else {
+		m.okButton.SetLabelColor(tview.Styles.PrimaryTextColor)
+		m.okButton.SetSelectedFunc(func() {
+			if m.done != nil {
+				m.done(m.main, m.secondary, true)
+			}
+		})
+	}
 }
 
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
 
-	m := &ModalInput{form, 9, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
+	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -38,9 +57,12 @@ func NewModalInput(title string) *ModalInput {
 		}
 	})
 
-	form.AddInputField("Task:", "", 50, nil, func(text string) {
+	var titleField *tview.InputField
+	form, titleField = form.AddInputField("Title:", "", 50, nil, func(text string) {
 		m.main = text
+		m.updateOKButton()
 	})
+	m.titleField = titleField
 
 	form.AddInputField("Details:", "", 50, nil, func(text string) {
 		m.secondary = text
@@ -57,6 +79,8 @@ func NewModalInput(title string) *ModalInput {
 			m.done(m.main, m.secondary, true) // Passed
 		}
 	})
+	m.okButton = m.GetButton(0)
+	m.updateOKButton()
 	m.AddButton("Cancel", func() {
 		if m.done != nil {
 			m.done(m.main, m.secondary, false)
@@ -73,7 +97,7 @@ func NewModalInput(title string) *ModalInput {
 
 func NewModalInputMode(title, modeDirectory string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{form, 8, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
+	m := &ModalInput{Form: form, DialogHeight: 8, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.AddInputField("Mode:", "", 50, nil, func(text string) {
 		m.main = text
@@ -109,7 +133,7 @@ func NewModalInputMode(title, modeDirectory string) *ModalInput {
 
 func NewModalInputLane(title, laneDescription string, dialogHeight int, initialInput1 string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{form, dialogHeight, tview.NewFrame(form), "", "", "", 2, false, false, "", "", "", "", nil}
+	m := &ModalInput{Form: form, DialogHeight: dialogHeight, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 	m.main = initialInput1
 
 	form.AddInputField("Lane:", initialInput1, 50, nil, func(text string) {
@@ -151,12 +175,15 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 	m.due = due
 	m.Clear(false)
 
-	m.AddInputField("Task:", text, 50, nil, func(text string) {
+	var titleField *tview.InputField
+	m.Form, titleField = m.Form.AddInputField("Title:", text, 50, nil, func(text string) {
 		if len(text) == 0 {
 			text = "(empty)"
 		}
 		m.main = text
+		m.updateOKButton()
 	})
+	m.titleField = titleField
 	m.AddInputField("Details:", secondary, 50, nil, func(text string) {
 		m.secondary = text
 	})
@@ -184,6 +211,18 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 				updating = false
 			}
 			m.due = formatted
+		})
+		dateField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
+				newText := removeLastDueDigit(m.due)
+				updating = true
+				dateField.SetText(newText)
+				updating = false
+				m.due = newText
+				return nil
+			}
+			return event
 		})
 		dateField.SetText(due)
 		m.AddFormItem(dateField)
@@ -213,6 +252,7 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 
 	itemCount := m.GetFormItemCount()
 	m.DialogHeight = 2*itemCount + 5
+	m.updateOKButton()
 }
 
 // formatDueInput formats a date input so that dots are inserted after day and
@@ -245,6 +285,16 @@ func formatDueInput(text string) string {
 	default:
 		return digits
 	}
+}
+
+// removeLastDueDigit removes the last numeric digit from a formatted due date.
+func removeLastDueDigit(text string) string {
+	digits := strings.ReplaceAll(strings.ReplaceAll(text, ".", ""), "/", "")
+	if len(digits) == 0 {
+		return ""
+	}
+	digits = digits[:len(digits)-1]
+	return formatDueInput(digits)
 }
 
 // SetPriority enables a priority dropdown with the given value (1-4).

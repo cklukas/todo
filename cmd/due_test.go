@@ -56,3 +56,24 @@ func TestFormatDueInputUS(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoveLastDueDigit(t *testing.T) {
+	os.Unsetenv("LC_TIME")
+	cases := map[string]string{
+		"":           "",
+		"1":          "",
+		"12.":        "1",
+		"12.03.2023": "12.03.202",
+	}
+	for in, expect := range cases {
+		if out := removeLastDueDigit(in); out != expect {
+			t.Fatalf("removeLastDueDigit(%q) = %q, want %q", in, out, expect)
+		}
+	}
+
+	os.Setenv("LC_TIME", "en_US")
+	defer os.Unsetenv("LC_TIME")
+	if out := removeLastDueDigit("12/03/2023"); out != "12/03/202" {
+		t.Fatalf("removeLastDueDigit US failed: %s", out)
+	}
+}
