@@ -1,6 +1,10 @@
 package cmd
 
-import "testing"
+import (
+	"os"
+	"testing"
+	"time"
+)
 
 func TestLocaleUSApple(t *testing.T) {
 	cases := map[string]bool{
@@ -15,4 +19,23 @@ func TestLocaleUSApple(t *testing.T) {
 			t.Fatalf("localeUSApple(%q)=%v want %v", in, got, want)
 		}
 	}
+}
+
+func TestIsoTimeToLocal(t *testing.T) {
+	iso := "2025-03-23T14:11:51Z"
+
+	os.Unsetenv("LC_TIME")
+	t1, _ := time.Parse(time.RFC3339, iso)
+	want := t1.Local().Format(dueLayout() + " 15:04")
+	if got := isoTimeToLocal(iso); got != want {
+		t.Fatalf("isoTimeToLocal non-US got %q want %q", got, want)
+	}
+
+	os.Setenv("LC_TIME", "en_US")
+	t2, _ := time.Parse(time.RFC3339, iso)
+	want = t2.Local().Format(dueLayout() + " 15:04")
+	if got := isoTimeToLocal(iso); got != want {
+		t.Fatalf("isoTimeToLocal US got %q want %q", got, want)
+	}
+	os.Unsetenv("LC_TIME")
 }
