@@ -21,6 +21,7 @@ func (l *Lanes) CmdAddTask() {
 	l.add.SetColor("")
 	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format(dueLayout())), "")
 	l.pages.ShowPage("add")
+	l.app.SetFocus(l.add)
 }
 
 func (l *Lanes) CmdEditTask() {
@@ -41,6 +42,7 @@ func (l *Lanes) CmdEditTask() {
 		l.edit.SetColor(color)
 		l.edit.SetValue(base, item.Secondary, isoToLocal(item.Due))
 		l.pages.ShowPage("edit")
+		l.app.SetFocus(l.edit)
 	}
 }
 
