@@ -20,6 +20,7 @@ func (l *Lanes) CmdAddTask() {
 	l.add.SetDue("")
 	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format(dueLayout())), "")
 	l.pages.ShowPage("add")
+	l.app.SetFocus(l.add)
 }
 
 func (l *Lanes) CmdEditTask() {
@@ -38,6 +39,7 @@ func (l *Lanes) CmdEditTask() {
 		l.edit.SetInfo(item.UserName, createdStr, updatedBy, updatedStr)
 		l.edit.SetValue(item.Title, item.Secondary, isoToLocal(item.Due))
 		l.pages.ShowPage("edit")
+		l.app.SetFocus(l.edit)
 	}
 }
 

@@ -44,3 +44,30 @@ func TestNoSelectionChangeDuringAdd(t *testing.T) {
 		t.Fatalf("selection changed while adding")
 	}
 }
+
+func TestAddTaskFocus(t *testing.T) {
+	c := &ToDoContent{}
+	c.InitializeNew()
+	app := tview.NewApplication()
+	l := NewLanes(c, app, "", t.TempDir())
+
+	l.CmdAddTask()
+
+	if app.GetFocus() != l.add.titleField {
+		t.Fatalf("focus not on add task dialog")
+	}
+}
+
+func TestEditTaskFocus(t *testing.T) {
+	c := &ToDoContent{}
+	c.InitializeNew()
+	c.AddItem(0, 0, "task", "", 2, "")
+	app := tview.NewApplication()
+	l := NewLanes(c, app, "", t.TempDir())
+
+	l.CmdEditTask()
+
+	if app.GetFocus() != l.edit.titleField {
+		t.Fatalf("focus not on edit task dialog")
+	}
+}
