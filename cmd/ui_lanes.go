@@ -38,11 +38,28 @@ func (l *Lanes) RedrawAllLanes() {
 }
 
 func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes string) *Lanes {
-	l := &Lanes{"", 0, todoDirModes, mode, content, make([]*tview.List, content.GetNumLanes()), 0, 0, false, tview.NewPages(), app, false,
-		NewModalInput("Add Task"),
-		NewModalInput("Edit Task"),
-		NewModalInputMode("Add Mode", todoDirModes), nil,
-		false, nil, nil, nil}
+	l := &Lanes{
+		nextMode:         "",
+		nextLaneFocus:    0,
+		todoDirModes:     todoDirModes,
+		mode:             mode,
+		content:          content,
+		lanes:            make([]*tview.List, content.GetNumLanes()),
+		active:           0,
+		lastActive:       0,
+		lastActiveSaved:  false,
+		pages:            tview.NewPages(),
+		app:              app,
+		inselect:         false,
+		add:              NewModalInput("Add Task"),
+		edit:             NewModalInput("Edit Task"),
+		addMode:          NewModalInputMode("Add Mode", todoDirModes),
+		bMoveHelp:        nil,
+		dialogActive:     false,
+		activeDialog:     nil,
+		origInputCapture: nil,
+		origMouseCapture: nil,
+	}
 
 	l.origInputCapture = app.GetInputCapture()
 	app.SetInputCapture(l.appInputCapture)

@@ -7,11 +7,14 @@ func (l *Lanes) HotKeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyF10:
 		l.CmdExit()
 		return nil
-	// case tcell.KeyF9:
-	// 	l.CmdSelectMode()
-	// 	return nil
+		// case tcell.KeyF9:
+		// 	l.CmdSelectMode()
+		// 	return nil
 	case tcell.KeyF7:
 		l.CmdLanesCmds()
+		return nil
+	case tcell.KeyF8:
+		l.CmdSortDialog()
 		return nil
 	case tcell.KeyF6:
 		l.CmdSelectNote()

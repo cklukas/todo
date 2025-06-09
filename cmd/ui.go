@@ -8,6 +8,11 @@ import (
 	"github.com/rivo/tview"
 )
 
+type dialogWithFrame interface {
+	tview.Primitive
+	GetFrame() *tview.Frame
+}
+
 type Lanes struct {
 	nextMode        string
 	nextLaneFocus   int
@@ -28,7 +33,7 @@ type Lanes struct {
 	bMoveHelp *tview.Button
 
 	dialogActive     bool
-	activeDialog     *ModalInput
+	activeDialog     dialogWithFrame
 	origInputCapture func(event *tcell.EventKey) *tcell.EventKey
 	origMouseCapture func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction)
 }
@@ -53,6 +58,13 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 		return fmt.Errorf("invalid index '%v', visible lines count is only '%v'", laneIndex, len(l.lanes))
 	}
 
+	prev := ""
+	if laneIndex == l.active {
+		if it := l.currentItem(); it != nil {
+			prev = it.Guid
+		}
+	}
+	l.content.SortLane(laneIndex)
 	l.lanes[laneIndex].Clear()
 	now := time.Now()
 	for _, item := range l.content.GetLaneItems(laneIndex) {
@@ -63,11 +75,26 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 		if suffix := dueSuffix(item.Due, now); suffix != "" {
 			title += " " + suffix
 		}
-		l.lanes[laneIndex].AddItem(title, item.Secondary, 0, nil)
+		secondary := item.Secondary
+		if mark := priorityMark(item.Priority); mark != "" {
+			if len(secondary) > 0 {
+				secondary += " "
+			}
+			secondary += mark
+		}
+		l.lanes[laneIndex].AddItem(title, secondary, 0, nil)
 	}
 
 	num := l.lanes[laneIndex].GetItemCount()
 	if num > 0 {
+		if prev != "" {
+			for i, item := range l.content.GetLaneItems(laneIndex) {
+				if item.Guid == prev {
+					active = i
+					break
+				}
+			}
+		}
 		l.lanes[laneIndex].SetCurrentItem(normPos(active, num))
 	}
 
@@ -149,7 +176,7 @@ func (l *Lanes) appInputCapture(event *tcell.EventKey) *tcell.EventKey {
 func (l *Lanes) appMouseCapture(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
 	if l.dialogActive && l.activeDialog != nil {
 		x, y := event.Position()
-		if !l.activeDialog.frame.InRect(x, y) {
+		if !l.activeDialog.GetFrame().InRect(x, y) {
 			return nil, action
 		}
 	}
@@ -159,7 +186,7 @@ func (l *Lanes) appMouseCapture(event *tcell.EventMouse, action tview.MouseActio
 	return event, action
 }
 
-func (l *Lanes) showDialog(name string, modal *ModalInput) {
+func (l *Lanes) showDialog(name string, modal dialogWithFrame) {
 	l.dialogActive = true
 	l.activeDialog = modal
 	l.pages.ShowPage(name)

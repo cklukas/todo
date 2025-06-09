@@ -100,3 +100,16 @@ func TestSplit(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeSortModes(t *testing.T) {
+	c := &ToDoContent{Titles: []string{"A", "B"}, Items: make([][]Item, 2)}
+	c.normalize()
+	if len(c.SortModes) != 2 {
+		t.Fatalf("expected 2 sort modes got %d", len(c.SortModes))
+	}
+	for i, m := range c.SortModes {
+		if m != "" {
+			t.Fatalf("sort mode %d should be empty", i)
+		}
+	}
+}
