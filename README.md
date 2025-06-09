@@ -43,6 +43,7 @@ Once you completed the above steps, the program can be directly opened from the 
 ## Modes
 
 The app may work with multiple todo lists. By default the mode "main" is activated. By launching the program with a single parameter (e.g. 'private' or 'work'), a new todo list is created and used for the particular execution of the program. If no argument is provided, the default list is used, indicated in the status line as 'main' (after the F10 Exit command). From version 1.0.11 on, you can also press 'm' to show the mode selection dialog. This dialog is also shown if you click on the mode name in the status bar. The mode selection dialog allows selection of all existing modes (which do not start with a dot), or by clicking 'Add' the creation of a new mode.
+When you pick a mode from this dialog, it is stored in `~/.todo/settings.json` and reused automatically whenever the program is started without specifying a mode on the command line.
 
 <img src="https://user-images.githubusercontent.com/11664020/207910707-c72c1b17-5550-4806-9d63-85d835427e61.png" width="75%" height="75%"/>
 
