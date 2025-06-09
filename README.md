@@ -15,7 +15,7 @@ A simple Kanban board for your terminal.
 * The application can be started multiple times, modifications performed in one instance are detected in other instances (through monitoring changes to the active `todo.json` file)
 * Use [red], [blue] etc. to colorize your item text
 * Hotkeys F1..F10 are shown in status bar, press F1 to see additional hot keys
-* Number and titles of lanes can be modifed (e.g., 'planned')
+* Number and titles of lanes can be modified (e.g., 'planned')
 * Press Enter and use arrow keys left / right to move items between lanes (e.g. from 'planned' to 'doing'), press Enter again to exit selection mode
 
 # Documentation
@@ -53,7 +53,7 @@ The app may work with multiple todo lists. By default the mode "main" is activat
 * macOS (arm64) (also uses `vim` as the note text editor, vim is installed by default)
 
 You may set the environment variable `EDITOR`, to use a different editor in Linux, Mac or Windows.
-Alternatively, you may set the environment variable `VISUAL` to set a graphical editor. Once invoked, the user interface of the ToDo Appp will be blocked and a info message will be shown. Once the editor is closed, the ToDo app will read the temporary editor file and proceed operation.
+Alternatively, you may set the environment variable `VISUAL` to set a graphical editor. Once invoked, the user interface of the ToDo App will be blocked and a info message will be shown. Once the editor is closed, the ToDo app will read the temporary editor file and proceed operation.
 
 Example call on Mac OS, to use the default text editor GUI to edit notes:
 
