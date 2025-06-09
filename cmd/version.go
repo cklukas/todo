@@ -3,14 +3,20 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"os/user"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 )
 
 var checkLatest bool
+var updateApp bool
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -22,6 +28,9 @@ var versionCmd = &cobra.Command{
 			v += " (local development version)"
 		}
 		fmt.Println(v)
+		if updateApp {
+			return updateToLatest()
+		}
 		if checkLatest {
 			if err := checkForNewVersion(); err != nil {
 				return err
@@ -34,6 +43,7 @@ var versionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(versionCmd)
 	versionCmd.Flags().BoolVarP(&checkLatest, "check", "c", false, "check for newer release")
+	versionCmd.Flags().BoolVarP(&updateApp, "update", "u", false, "download latest release")
 }
 
 func checkForNewVersion() error {
@@ -120,4 +130,120 @@ func isReleaseNewer(release, current string) (bool, error) {
 
 func isLocalDevelopmentVersion(v string) bool {
 	return v == "" || strings.Contains(v, "..")
+}
+
+func assetNameForCurrentOS() (string, error) {
+	switch runtime.GOOS {
+	case "windows":
+		if runtime.GOARCH == "amd64" {
+			return "todo.exe", nil
+		}
+	case "linux":
+		if runtime.GOARCH == "amd64" {
+			return "todo_linux_amd64", nil
+		}
+		if runtime.GOARCH == "arm64" {
+			return "todo_linux_arm64", nil
+		}
+	case "darwin":
+		if runtime.GOARCH == "arm64" {
+			return "todo_mac_arm64", nil
+		}
+	}
+	return "", fmt.Errorf("unsupported OS/ARCH combination %s/%s", runtime.GOOS, runtime.GOARCH)
+}
+
+func updateToLatest() error {
+	tag, err := getLatestReleaseTag()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Latest release: %s\n", tag)
+	newer, err := isReleaseNewer(tag, AppVersion)
+	if err != nil {
+		return err
+	}
+	if !newer {
+		fmt.Println("Already on latest version")
+		return nil
+	}
+
+	asset, err := assetNameForCurrentOS()
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("https://github.com/cklukas/todo/releases/download/%s/%s", tag, asset)
+	tmp, err := os.CreateTemp("", asset+"__"+strings.TrimPrefix(tag, "v"))
+	if err != nil {
+		return err
+	}
+	defer tmp.Close()
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download failed: %s", resp.Status)
+	}
+	if _, err := io.Copy(tmp, resp.Body); err != nil {
+		return err
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Downloaded new version to %s\n", tmp.Name())
+	printUpdateInstructions(tmp.Name(), exe)
+	return nil
+}
+
+func printUpdateInstructions(tmp, exe string) {
+	switch runtime.GOOS {
+	case "windows":
+		fmt.Printf("To update, run (in a terminal with administrator rights):\n  copy /Y %s %s\n", tmp, exe)
+	default:
+		writable := fileWritable(exe)
+		if writable {
+			fmt.Printf("To update, run:\n  cp %s %s\n  chmod +x %s\n", tmp, exe, exe)
+		} else {
+			fmt.Printf("To update, run:\n  sudo cp %s %s\n  sudo chmod +x %s\n", tmp, exe, exe)
+		}
+	}
+}
+
+func fileWritable(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	mode := info.Mode().Perm()
+	if runtime.GOOS == "windows" {
+		// On Windows rely on the write bits only.
+		return mode&0222 != 0
+	}
+	st, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return mode&0222 != 0
+	}
+	uid := os.Getuid()
+	if int(st.Uid) == uid && mode&0200 != 0 {
+		return true
+	}
+	usr, err := user.Current()
+	if err == nil {
+		gids, _ := usr.GroupIds()
+		for _, g := range gids {
+			gid, _ := strconv.Atoi(g)
+			if int(st.Gid) == gid && mode&0020 != 0 {
+				return true
+			}
+		}
+	} else if int(st.Gid) == os.Getgid() && mode&0020 != 0 {
+		return true
+	}
+	if mode&0002 != 0 {
+		return true
+	}
+	return false
 }
