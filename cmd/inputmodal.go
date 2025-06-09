@@ -182,7 +182,7 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 	if m.showColor {
 		ci := NewColorInput("Title:", m.colors)
 		titleField = ci.input
-		titleField.SetText(applyPrefix(text, m.color))
+		titleField.SetText(text)
 		titleField.SetChangedFunc(func(text string) {
 			if len(text) == 0 {
 				text = "(empty)"
@@ -200,10 +200,6 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 		ci.dropdown.SetCurrentOption(idx)
 		ci.dropdown.SetSelectedFunc(func(option string, index int) {
 			m.color = m.colors[index]
-			base := removePrefix(titleField.GetText())
-			newText := applyPrefix(base, m.color)
-			titleField.SetText(newText)
-			m.main = newText
 		})
 		m.AddFormItem(ci)
 	} else {

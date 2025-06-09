@@ -9,8 +9,8 @@ import (
 func TestNoSelectionChangeDuringEdit(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "task 1", "", 2, "")
-	c.AddItem(0, 1, "task 2", "", 2, "")
+	c.AddItem(0, 0, "task 1", "", 2, "", "")
+	c.AddItem(0, 1, "task 2", "", 2, "", "")
 	app := tview.NewApplication()
 	l := NewLanes(c, app, "", t.TempDir())
 
@@ -29,8 +29,8 @@ func TestNoSelectionChangeDuringEdit(t *testing.T) {
 func TestNoSelectionChangeDuringAdd(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "task 1", "", 2, "")
-	c.AddItem(0, 1, "task 2", "", 2, "")
+	c.AddItem(0, 0, "task 1", "", 2, "", "")
+	c.AddItem(0, 1, "task 2", "", 2, "", "")
 	app := tview.NewApplication()
 	l := NewLanes(c, app, "", t.TempDir())
 
@@ -61,7 +61,7 @@ func TestAddTaskFocus(t *testing.T) {
 func TestEditTaskFocus(t *testing.T) {
 	c := &ToDoContent{}
 	c.InitializeNew()
-	c.AddItem(0, 0, "task", "", 2, "")
+	c.AddItem(0, 0, "task", "", 2, "", "")
 	app := tview.NewApplication()
 	l := NewLanes(c, app, "", t.TempDir())
 

@@ -38,9 +38,8 @@ func (l *Lanes) CmdEditTask() {
 			updatedBy = item.UpdatedByName
 		}
 		l.edit.SetInfo(item.UserName, createdStr, updatedBy, updatedStr)
-		color, base := parsePrefix(item.Title)
-		l.edit.SetColor(color)
-		l.edit.SetValue(base, item.Secondary, isoToLocal(item.Due))
+		l.edit.SetColor(item.Color)
+		l.edit.SetValue(item.Title, item.Secondary, isoToLocal(item.Due))
 		l.pages.ShowPage("edit")
 		l.app.SetFocus(l.edit)
 	}

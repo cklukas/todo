@@ -24,6 +24,7 @@ type Item struct {
 	Created       string
 	LastUpdate    string
 	Due           string
+	Color         string
 	UserName      string
 	UpdatedByName string
 	Mode          string
@@ -130,7 +131,7 @@ func (c *ToDoContent) ArchiveItem(lane, idx int) error {
 	return nil
 }
 
-func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string, priority int, due string) {
+func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string, priority int, due, color string) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	usr, err := user.Current()
 	userName := ""
@@ -148,6 +149,7 @@ func (c *ToDoContent) AddItem(lane, idx int, title string, secondary string, pri
 		Created:       now,
 		LastUpdate:    now,
 		Due:           due,
+		Color:         color,
 		UserName:      userName,
 		UpdatedByName: userName,
 		Mode:          "",
@@ -179,6 +181,11 @@ func (c *ToDoContent) normalize() {
 				} else {
 					item.LastUpdate = now
 				}
+			}
+			if item.Color == "" {
+				var col string
+				col, item.Title = parsePrefix(item.Title)
+				item.Color = col
 			}
 			if item.UserName == "" {
 				item.UserName = userName
