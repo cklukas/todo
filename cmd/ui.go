@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -25,6 +26,11 @@ type Lanes struct {
 	addMode         *ModalInput
 
 	bMoveHelp *tview.Button
+
+	dialogActive     bool
+	activeDialog     *ModalInput
+	origInputCapture func(event *tcell.EventKey) *tcell.EventKey
+	origMouseCapture func(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction)
 }
 
 func (l *Lanes) CmdAbout() {
@@ -128,4 +134,41 @@ func (l *Lanes) currentItem() *Item {
 
 func (l *Lanes) GetUi() *tview.Pages {
 	return l.pages
+}
+
+func (l *Lanes) appInputCapture(event *tcell.EventKey) *tcell.EventKey {
+	if l.dialogActive {
+		return event
+	}
+	if l.origInputCapture != nil {
+		return l.origInputCapture(event)
+	}
+	return event
+}
+
+func (l *Lanes) appMouseCapture(event *tcell.EventMouse, action tview.MouseAction) (*tcell.EventMouse, tview.MouseAction) {
+	if l.dialogActive && l.activeDialog != nil {
+		x, y := event.Position()
+		if !l.activeDialog.frame.InRect(x, y) {
+			return nil, action
+		}
+	}
+	if l.origMouseCapture != nil {
+		return l.origMouseCapture(event, action)
+	}
+	return event, action
+}
+
+func (l *Lanes) showDialog(name string, modal *ModalInput) {
+	l.dialogActive = true
+	l.activeDialog = modal
+	l.pages.ShowPage(name)
+	l.app.SetFocus(modal)
+}
+
+func (l *Lanes) hideDialog(name string) {
+	l.dialogActive = false
+	l.activeDialog = nil
+	l.pages.HidePage(name)
+	l.setActive()
 }
