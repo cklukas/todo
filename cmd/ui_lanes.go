@@ -165,6 +165,10 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 
 	l.add.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {
+			if !l.add.DueValid() {
+				l.showError("add", "Invalid due date")
+				return
+			}
 			item := l.lanes[l.active].GetCurrentItem()
 			if len(text) == 0 {
 				text = "(empty)"
@@ -192,6 +196,10 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 
 	l.edit.SetDoneFunc(func(text string, secondary string, success bool) {
 		if success {
+			if !l.edit.DueValid() {
+				l.showError("edit", "Invalid due date")
+				return
+			}
 			item := l.lanes[l.active].GetCurrentItem()
 			itemVal := l.currentItem()
 			itemVal.Title = text
@@ -211,6 +219,18 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 	l.pages.AddPage("edit", l.edit, false, false)
 
 	return l
+}
+
+func (l *Lanes) showError(pageReturn, message string) {
+	modal := tview.NewModal().
+		SetText(message).
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			l.pages.HidePage("error")
+			l.pages.ShowPage(pageReturn)
+			l.setActive()
+		})
+	l.pages.AddPage("error", modal, false, true)
 }
 
 func (l *Lanes) CmdLanesCmds() {
