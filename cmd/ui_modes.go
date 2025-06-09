@@ -13,7 +13,10 @@ import (
 
 func (l *Lanes) ListValidModesRemoveProvided(activeMode string) ([]string, int, error) {
 	res := make([]string, 0)
-	modes, activeModeIndex, _ := l.ListValidModes(activeMode)
+	modes, activeModeIndex, err := l.ListValidModes(activeMode)
+	if err != nil {
+		return nil, 0, err
+	}
 	for _, m := range modes {
 		if m != activeMode {
 			res = append(res, m)
