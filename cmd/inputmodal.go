@@ -42,7 +42,7 @@ func NewModalInput(title string) *ModalInput {
 		m.main = text
 	})
 
-	form.AddInputField("Created / due:", "", 50, nil, func(text string) {
+	form.AddInputField("Details:", "", 50, nil, func(text string) {
 		m.secondary = text
 	})
 
@@ -157,11 +157,11 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 		}
 		m.main = text
 	})
-	m.AddInputField("Created / due:", secondary, 50, nil, func(text string) {
+	m.AddInputField("Details:", secondary, 50, nil, func(text string) {
 		m.secondary = text
 	})
 	if m.showDue {
-		dateField := tview.NewInputField().SetLabel("Due:").SetFieldWidth(10).SetPlaceholder("dd.mm.yyyy")
+		dateField := tview.NewInputField().SetLabel("Due:").SetFieldWidth(10).SetPlaceholder(duePlaceholder())
 		updating := false
 		dateField.SetAcceptanceFunc(func(text string, ch rune) bool {
 			if ch == 0 {
@@ -170,7 +170,7 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 			if ch < '0' || ch > '9' {
 				return false
 			}
-			digits := strings.ReplaceAll(text, ".", "")
+			digits := strings.ReplaceAll(strings.ReplaceAll(text, ".", ""), "/", "")
 			return len(digits) <= 8
 		})
 		dateField.SetChangedFunc(func(text string) {
@@ -211,9 +211,19 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 // month. Input may already contain dots and may be partially entered.
 // At most 8 digits are considered.
 func formatDueInput(text string) string {
-	digits := strings.ReplaceAll(text, ".", "")
+	digits := strings.ReplaceAll(strings.ReplaceAll(text, ".", ""), "/", "")
 	if len(digits) > 8 {
 		digits = digits[:8]
+	}
+	if localeUS() {
+		switch {
+		case len(digits) > 4:
+			return digits[:2] + "/" + digits[2:4] + "/" + digits[4:]
+		case len(digits) >= 2:
+			return digits[:2] + "/" + digits[2:]
+		default:
+			return digits
+		}
 	}
 	switch {
 	case len(digits) > 4:
@@ -234,7 +244,7 @@ func (m *ModalInput) SetPriority(value int) {
 	m.showPriority = true
 }
 
-// SetDue enables a due date input field with the given value (dd.mm.yyyy).
+// SetDue enables a due date input field with the given value using locale formatting.
 func (m *ModalInput) SetDue(date string) {
 	m.due = date
 	m.showDue = true
@@ -245,11 +255,20 @@ func (m *ModalInput) GetDueISO() string {
 	if !m.showDue || m.due == "" {
 		return ""
 	}
-	t, err := time.Parse("02.01.2006", m.due)
+	t, err := time.Parse(dueLayout(), m.due)
 	if err != nil {
 		return ""
 	}
 	return t.Format("2006-01-02")
+}
+
+// DueValid reports whether the current due value can be parsed.
+func (m *ModalInput) DueValid() bool {
+	if !m.showDue || m.due == "" {
+		return true
+	}
+	_, err := time.Parse(dueLayout(), m.due)
+	return err == nil
 }
 
 // GetPriority returns the currently selected priority value.

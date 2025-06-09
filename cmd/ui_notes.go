@@ -12,17 +12,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func isoToLocal(iso string) string {
-	if iso == "" {
-		return ""
-	}
-	t, err := time.Parse("2006-01-02", iso)
-	if err != nil {
-		return ""
-	}
-	return t.Format("02.01.2006")
-}
-
 func (l *Lanes) CmdAddTask() {
 	l.saveActive()
 	now := time.Now()
