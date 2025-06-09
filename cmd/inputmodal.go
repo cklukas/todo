@@ -32,6 +32,10 @@ type ModalInput struct {
 	done         func(string, string, bool)
 }
 
+func (m *ModalInput) GetFrame() *tview.Frame {
+	return m.frame
+}
+
 func (m *ModalInput) updateOKButton() {
 	if m.okButton == nil {
 		return

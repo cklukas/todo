@@ -33,6 +33,7 @@ type Item struct {
 type ToDoContent struct {
 	Titles         []string
 	Items          [][]Item
+	SortModes      []string
 	fname          string     `json:"-"`
 	archiveFolder  string     `json:"-"`
 	backupFolder   string     `json:"-"`
@@ -42,6 +43,7 @@ type ToDoContent struct {
 func (c *ToDoContent) InitializeNew() {
 	c.Titles = []string{"To Do", "Doing", "Done"}
 	c.Items = make([][]Item, 3)
+	c.SortModes = make([]string, 3)
 }
 
 func (c *ToDoContent) ReadFromFile(fname string) error {
@@ -78,6 +80,9 @@ func (c *ToDoContent) GetLaneItems(idx int) []Item {
 func (c *ToDoContent) RemoveLane(lane int) {
 	c.Titles = append(c.Titles[:lane], c.Titles[lane+1:]...)
 	c.Items = append(c.Items[:lane], c.Items[lane+1:]...)
+	if len(c.SortModes) > lane {
+		c.SortModes = append(c.SortModes[:lane], c.SortModes[lane+1:]...)
+	}
 }
 
 func (c *ToDoContent) InsertNewLane(addToLeft bool, laneTitle string, relativeToLaneIdx int) int {
@@ -90,6 +95,7 @@ func (c *ToDoContent) InsertNewLane(addToLeft bool, laneTitle string, relativeTo
 	newItemList = append(newItemList, []Item{})
 	c.Items = append(c.Items[:i], append(newItemList, c.Items[i:]...)...)
 	c.Titles = append(c.Titles[:i], append([]string{laneTitle}, c.Titles[i:]...)...)
+	c.SortModes = append(c.SortModes[:i], append([]string{""}, c.SortModes[i:]...)...)
 
 	return i
 }
@@ -99,6 +105,18 @@ func (c *ToDoContent) MoveItem(fromlane, fromidx, tolane, toidx int) {
 	// https://github.com/golang/go/wiki/SliceTricks
 	c.Items[fromlane] = append(c.Items[fromlane][:fromidx], c.Items[fromlane][fromidx+1:]...)
 	c.Items[tolane] = append(c.Items[tolane][:toidx], append([]Item{item}, c.Items[tolane][toidx:]...)...)
+}
+
+func (c *ToDoContent) SetLaneSort(idx int, mode string) {
+	if idx >= 0 && idx < len(c.SortModes) {
+		c.SortModes[idx] = mode
+	}
+}
+
+func (c *ToDoContent) SortLane(idx int) {
+	if idx >= 0 && idx < len(c.Items) {
+		sortItems(c.Items[idx], c.SortModes[idx])
+	}
 }
 
 func (c *ToDoContent) DelItem(lane, idx int) {
@@ -164,6 +182,10 @@ func (c *ToDoContent) normalize() {
 	userName := ""
 	if err == nil {
 		userName = usr.Username
+	}
+
+	if len(c.SortModes) != len(c.Titles) {
+		c.SortModes = make([]string, len(c.Titles))
 	}
 
 	for li := range c.Items {
