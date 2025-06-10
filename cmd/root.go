@@ -157,6 +157,7 @@ func getStatusBar(lanes *ui.Lanes, mode string) (*tview.Flex, *tview.TextView) {
 		AddItem(bMoveHelp, 38, 1, false).
 		AddItem(clockView, 20, 1, false)
 
+	defaultStatusBarMenuItems.SetBackgroundColor(tcell.ColorLightGray)
 	return defaultStatusBarMenuItems, clockView
 }
 
