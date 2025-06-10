@@ -22,7 +22,7 @@ func (m *ColorModal) GetFrame() *tview.Frame {
 func NewColorModal(title, current string) *ColorModal {
 	form := tview.NewForm()
 	m := &ColorModal{Form: form, DialogHeight: 7, frame: tview.NewFrame(form), optionIndex: 0,
-		options: []string{"", "blue", "green", "red", "yellow", "white", "darkcyan", "black", "darkmagenta"}, done: nil}
+		options: []string{"", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -30,7 +30,7 @@ func NewColorModal(title, current string) *ColorModal {
 		}
 	})
 
-	labels := []string{"default", "blue", "green", "red", "yellow", "white", "darkcyan", "black", "darkmagenta"}
+	labels := []string{"default", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}
 	idx := 0
 	for i, v := range m.options {
 		if v == current {
