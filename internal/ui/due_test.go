@@ -21,6 +21,7 @@ func TestDueSuffix(t *testing.T) {
 
 func TestFormatDueInput(t *testing.T) {
 	os.Unsetenv("LC_TIME")
+	os.Unsetenv("AppleLocale")
 	cases := map[string]string{
 		"1":          "1",
 		"12":         "12.",
@@ -39,7 +40,9 @@ func TestFormatDueInput(t *testing.T) {
 
 func TestFormatDueInputUS(t *testing.T) {
 	os.Setenv("LC_TIME", "en_US")
+	os.Setenv("AppleLocale", "en_US")
 	defer os.Unsetenv("LC_TIME")
+	defer os.Unsetenv("AppleLocale")
 
 	cases := map[string]string{
 		"1":          "1",
@@ -72,7 +75,9 @@ func TestRemoveLastDueDigit(t *testing.T) {
 	}
 
 	os.Setenv("LC_TIME", "en_US")
+	os.Setenv("AppleLocale", "en_US")
 	defer os.Unsetenv("LC_TIME")
+	defer os.Unsetenv("AppleLocale")
 	if out := removeLastDueDigit("12/03/2023"); out != "12/03/202" {
 		t.Fatalf("removeLastDueDigit US failed: %s", out)
 	}
