@@ -23,6 +23,7 @@ type ModalInput struct {
 	color        string
 	showColor    bool
 	colors       []string
+	laneColor    string
 	createdBy    string
 	created      string
 	updatedBy    string
@@ -56,7 +57,7 @@ func (m *ModalInput) updateOKButton() {
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
 
-	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, color: "", showColor: false, colors: []string{"default", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
+	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, color: "", showColor: false, colors: []string{"default", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}, laneColor: "", createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -104,7 +105,7 @@ func NewModalInput(title string) *ModalInput {
 
 func NewModalInputMode(title, modeDirectory string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{Form: form, DialogHeight: 8, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
+	m := &ModalInput{Form: form, DialogHeight: 8, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, laneColor: "", createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.AddInputField("Mode:", "", 50, nil, func(text string) {
 		m.main = text
@@ -140,7 +141,7 @@ func NewModalInputMode(title, modeDirectory string) *ModalInput {
 
 func NewModalInputLane(title, laneDescription string, dialogHeight int, initialInput1 string) *ModalInput {
 	form := tview.NewForm()
-	m := &ModalInput{Form: form, DialogHeight: dialogHeight, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
+	m := &ModalInput{Form: form, DialogHeight: dialogHeight, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, laneColor: "", createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 	m.main = initialInput1
 
 	form.AddInputField("Lane:", initialInput1, 50, nil, func(text string) {
@@ -184,7 +185,7 @@ func (m *ModalInput) SetValue(text string, secondary string, due string) {
 
 	var titleField *tview.InputField
 	if m.showColor {
-		ci := NewColorInput("Title:", m.colors)
+		ci := NewColorInput("Title:", m.laneColor, m.colors)
 		titleField = ci.input
 		titleField.SetText(text)
 		titleField.SetChangedFunc(func(text string) {
@@ -338,6 +339,11 @@ func (m *ModalInput) SetPriority(value int) {
 func (m *ModalInput) SetColor(color string) {
 	m.color = color
 	m.showColor = true
+}
+
+// SetLaneColor sets the lane background color used for the color dropdown.
+func (m *ModalInput) SetLaneColor(color string) {
+	m.laneColor = color
 }
 
 // SetDue enables a due date input field with the given value using locale formatting.

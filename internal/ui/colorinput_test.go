@@ -29,7 +29,7 @@ func TestApplyPrefix(t *testing.T) {
 }
 
 func TestColorInputTabSwitch(t *testing.T) {
-	ci := NewColorInput("Title:", []string{"default", "blue"})
+	ci := NewColorInput("Title:", "", []string{"default", "blue"})
 	focused := tview.Primitive(nil)
 	setFocus := func(p tview.Primitive) { focused = p; p.Focus(func(p tview.Primitive) {}) }
 
@@ -48,7 +48,7 @@ func TestColorInputTabSwitch(t *testing.T) {
 }
 
 func TestColorInputFinishedFunc(t *testing.T) {
-	ci := NewColorInput("Title:", []string{"default", "blue"})
+	ci := NewColorInput("Title:", "", []string{"default", "blue"})
 	called := false
 	ci.SetFinishedFunc(func(k tcell.Key) { called = true })
 

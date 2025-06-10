@@ -30,12 +30,16 @@ func NewColorModal(title, current string) *ColorModal {
 		}
 	})
 
-	labels := []string{"default", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}
+	labels := make([]string, len(m.options))
 	idx := 0
 	for i, v := range m.options {
+		if i == 0 || v == "" {
+			labels[i] = "default"
+		} else {
+			labels[i] = "[black:" + v + "]" + v
+		}
 		if v == current {
 			idx = i
-			break
 		}
 	}
 	m.optionIndex = idx

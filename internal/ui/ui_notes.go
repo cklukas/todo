@@ -19,6 +19,7 @@ func (l *Lanes) CmdAddTask() {
 	l.add.ClearExtras()
 	l.add.SetPriority(2)
 	l.add.SetDue("")
+	l.add.SetLaneColor(l.content.GetLaneColor(l.active))
 	l.add.SetColor("")
 	l.add.SetValue("", fmt.Sprintf("created: %v", now.Format(dueLayout())), "")
 	l.showDialog("add", l.add)
@@ -38,6 +39,7 @@ func (l *Lanes) CmdEditTask() {
 			updatedBy = item.UpdatedByName
 		}
 		l.edit.SetInfo(item.UserName, createdStr, updatedBy, updatedStr)
+		l.edit.SetLaneColor(l.content.GetLaneColor(l.active))
 		l.edit.SetColor(item.Color)
 		l.edit.SetValue(item.Title, item.Secondary, isoToLocal(item.Due))
 		l.showDialog("edit", l.edit)
