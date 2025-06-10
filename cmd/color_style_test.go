@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"unsafe"
 
@@ -28,15 +29,17 @@ func TestColorModalLabelsHaveBackground(t *testing.T) {
 	dlg := ui.NewColorModal("Color", "")
 	dd := dlg.GetFormItem(0).(*tview.DropDown)
 	texts := getDropDownTexts(dd)
-	if texts[1] != "[black:black]black" {
-		t.Fatalf("color modal text for black wrong: %s", texts[1])
+	trimmed := strings.TrimRight(texts[1], " ")
+	if trimmed != "[black:black]black" || len(texts[1]) == len(trimmed) {
+		t.Fatalf("color modal text for black wrong: %q", texts[1])
 	}
 }
 
 func TestColorInputLabelsUseLaneBackground(t *testing.T) {
 	ci := ui.NewColorInput("Title:", "yellow", []string{"default", "red"})
 	texts := getDropDownTextsFromCI(ci)
-	if texts[1] != "[red:yellow]red" {
-		t.Fatalf("color input text for red wrong: %s", texts[1])
+	trimmed := strings.TrimRight(texts[1], " ")
+	if trimmed != "[red:yellow]red" || len(texts[1]) == len(trimmed) {
+		t.Fatalf("color input text for red wrong: %q", texts[1])
 	}
 }

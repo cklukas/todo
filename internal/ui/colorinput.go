@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -21,16 +23,30 @@ func NewColorInput(label, laneColor string, colors []string) *ColorInput {
 	dd := tview.NewDropDown()
 	dd.SetLabel("")
 	disp := make([]string, len(colors))
+	maxLen := 0
 	for i, c := range colors {
+		name := c
 		if i == 0 || c == "" {
-			disp[i] = "default"
-		} else {
-			if laneColor != "" {
-				disp[i] = "[" + c + ":" + laneColor + "]" + c
-			} else {
-				disp[i] = "[" + c + "]" + c
-			}
+			name = "default"
 		}
+		if len(name) > maxLen {
+			maxLen = len(name)
+		}
+	}
+	for i, c := range colors {
+		name := c
+		fg := c
+		bg := laneColor
+		if i == 0 || c == "" {
+			name = "default"
+			fg = "black"
+		}
+		style := "[" + fg
+		if bg != "" {
+			style += ":" + bg
+		}
+		style += "]"
+		disp[i] = style + name + strings.Repeat(" ", maxLen-len(name))
 	}
 	dd.SetOptions(disp, nil)
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
