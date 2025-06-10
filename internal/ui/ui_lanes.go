@@ -72,6 +72,7 @@ func NewLanes(content *model.ToDoContent, app *tview.Application, mode, todoDirM
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
+		l.lanes[i].SetSelectedFocusOnly(true)
 		if col := l.content.GetLaneColor(i); col != "" {
 			l.lanes[i].SetBackgroundColor(tcell.GetColor(col))
 		}
