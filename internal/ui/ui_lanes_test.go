@@ -133,3 +133,35 @@ func TestInputCaptureDuringAdd(t *testing.T) {
 		t.Fatalf("original input capture not called after dialog")
 	}
 }
+
+func TestInputCaptureDuringLaneDialog(t *testing.T) {
+	c := &model.ToDoContent{}
+	c.InitializeNew()
+	app := tview.NewApplication()
+	called := false
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		called = true
+		return nil
+	})
+	l := NewLanes(c, app, "", t.TempDir(), "")
+
+	l.CmdLanesCmds()
+	key := tcell.NewEventKey(tcell.KeyF1, rune(0), tcell.ModNone)
+	ret := app.GetInputCapture()(key)
+	if ret != key {
+		t.Fatalf("input capture modified event")
+	}
+	if called {
+		t.Fatalf("original input capture called during dialog")
+	}
+
+	l.hideDialog("laneDialog")
+	called = false
+	ret = app.GetInputCapture()(key)
+	if ret != nil {
+		t.Fatalf("expected nil from original capture")
+	}
+	if !called {
+		t.Fatalf("original input capture not called after dialog")
+	}
+}

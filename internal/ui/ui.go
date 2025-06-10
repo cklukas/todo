@@ -71,10 +71,23 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 	l.content.SortLane(laneIndex)
 	l.lanes[laneIndex].Clear()
 	now := time.Now()
+	laneBg := tview.Styles.PrimitiveBackgroundColor
+	if col := l.content.GetLaneColor(laneIndex); col != "" {
+		laneBg = tcell.GetColor(col)
+	}
+
 	for _, item := range l.content.GetLaneItems(laneIndex) {
 		title := item.Title
 		if item.Color != "" {
-			title = "[" + item.Color + "]" + title
+			if tcell.GetColor(item.Color) == laneBg {
+				altBg := "white"
+				if laneBg == tcell.ColorWhite {
+					altBg = "black"
+				}
+				title = "[" + item.Color + ":" + altBg + "]" + title
+			} else {
+				title = "[" + item.Color + "]" + title
+			}
 		}
 		if suffix := dueSuffix(item.Due, now); suffix != "" {
 			title += " " + suffix
