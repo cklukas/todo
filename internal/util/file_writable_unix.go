@@ -1,6 +1,6 @@
 //go:build !windows
 
-package cmd
+package util
 
 import (
 	"os"
@@ -10,7 +10,7 @@ import (
 )
 
 // fileWritable reports whether the given path is writable by the current user on Unix-like systems.
-func fileWritable(path string) bool {
+func FileWritable(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
 		return false

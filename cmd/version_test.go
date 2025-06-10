@@ -7,6 +7,8 @@ import (
 	"os"
 	"runtime"
 	"testing"
+
+	"github.com/cklukas/todo/internal/util"
 )
 
 func TestIsReleaseNewer(t *testing.T) {
@@ -69,15 +71,15 @@ func TestFileWritable(t *testing.T) {
 	}
 	tmp.Close()
 	defer os.Remove(tmp.Name())
-	if !fileWritable(tmp.Name()) {
+	if !util.FileWritable(tmp.Name()) {
 		t.Errorf("expected file to be writable")
 	}
 	os.Chmod(tmp.Name(), 0444)
-	if fileWritable(tmp.Name()) {
+	if util.FileWritable(tmp.Name()) {
 		t.Errorf("expected file to be non writable")
 	}
 	os.Chmod(tmp.Name(), 0666)
-	if !fileWritable(tmp.Name()) {
+	if !util.FileWritable(tmp.Name()) {
 		t.Errorf("expected file to be writable with world permissions")
 	}
 }
@@ -89,9 +91,9 @@ func TestLatestReleaseInfo(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	oldURL := latestReleaseURL
-	latestReleaseURL = srv.URL
-	defer func() { latestReleaseURL = oldURL }()
+	oldURL := util.LatestReleaseURL
+	util.LatestReleaseURL = srv.URL
+	defer func() { util.LatestReleaseURL = oldURL }()
 
 	tag, newer, err := latestReleaseInfo("1.0.0")
 	if err != nil {

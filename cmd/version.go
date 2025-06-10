@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/cklukas/todo/internal/util"
 )
 
 var checkLatest bool
@@ -59,109 +59,27 @@ func checkForNewVersion() error {
 }
 
 func latestReleaseInfo(current string) (string, bool, error) {
-	tag, err := getLatestReleaseTag()
-	if err != nil {
-		return "", false, err
-	}
-	newer, err := isReleaseNewer(tag, current)
-	if err != nil {
-		return tag, false, err
-	}
-	return tag, newer, nil
+	return util.LatestReleaseInfo(current)
 }
 
 func getLatestReleaseTag() (string, error) {
-	resp, err := http.Get(latestReleaseURL)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status: %s", resp.Status)
-	}
-	var data struct {
-		Tag string `json:"tag_name"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", err
-	}
-	return data.Tag, nil
+	return util.GetLatestReleaseTag()
 }
 
 func versionParts(v string) ([]int, error) {
-	v = strings.TrimPrefix(v, "v")
-	if v == "" {
-		return []int{0}, nil
-	}
-	parts := strings.Split(v, ".")
-	res := make([]int, len(parts))
-	for i, p := range parts {
-		if p == "" {
-			res[i] = 0
-			continue
-		}
-		n, err := strconv.Atoi(p)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = n
-	}
-	return res, nil
+	return util.VersionParts(v)
 }
 
 func isReleaseNewer(release, current string) (bool, error) {
-	r, err := versionParts(release)
-	if err != nil {
-		return false, err
-	}
-	c, err := versionParts(current)
-	if err != nil {
-		return false, err
-	}
-	l := len(r)
-	if len(c) > l {
-		l = len(c)
-	}
-	for i := 0; i < l; i++ {
-		rv, cv := 0, 0
-		if i < len(r) {
-			rv = r[i]
-		}
-		if i < len(c) {
-			cv = c[i]
-		}
-		if rv > cv {
-			return true, nil
-		} else if rv < cv {
-			return false, nil
-		}
-	}
-	return false, nil
+	return util.IsReleaseNewer(release, current)
 }
 
 func isLocalDevelopmentVersion(v string) bool {
-	return v == "" || strings.Contains(v, "..")
+	return util.IsLocalDevelopmentVersion(v)
 }
 
 func assetNameForCurrentOS() (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		if runtime.GOARCH == "amd64" {
-			return "todo.exe", nil
-		}
-	case "linux":
-		if runtime.GOARCH == "amd64" {
-			return "todo_linux_amd64", nil
-		}
-		if runtime.GOARCH == "arm64" {
-			return "todo_linux_arm64", nil
-		}
-	case "darwin":
-		if runtime.GOARCH == "arm64" {
-			return "todo_mac_arm64", nil
-		}
-	}
-	return "", fmt.Errorf("unsupported OS/ARCH combination %s/%s", runtime.GOOS, runtime.GOARCH)
+	return util.AssetNameForCurrentOS()
 }
 
 func updateToLatest() error {
@@ -214,7 +132,7 @@ func printUpdateInstructions(tmp, exe string) {
 	case "windows":
 		fmt.Printf("To update, run (in a terminal with administrator rights):\n  copy /Y %s %s\n", tmp, exe)
 	default:
-		writable := fileWritable(exe)
+		writable := util.FileWritable(exe)
 		if writable {
 			fmt.Printf("To update, run:\n  cp %s %s\n  chmod +x %s\n", tmp, exe, exe)
 		} else {

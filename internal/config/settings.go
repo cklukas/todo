@@ -1,4 +1,4 @@
-package cmd
+package config
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 
 // loadLastModeFromSettings loads the last UI selected mode from
 // $HOME/.todo/settings.json. It returns the mode or an error.
-func loadLastModeFromSettings(home string) (string, error) {
+func LoadLastModeFromSettings(home string) (string, error) {
 	fname := path.Join(home, ".todo", "settings.json")
 	data, err := os.ReadFile(fname)
 	if err != nil {
@@ -28,7 +28,7 @@ func loadLastModeFromSettings(home string) (string, error) {
 
 // saveLastModeToSettings writes the provided mode to
 // $HOME/.todo/settings.json.
-func saveLastModeToSettings(home, mode string) error {
+func SaveLastModeToSettings(home, mode string) error {
 	dir := path.Join(home, ".todo")
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err

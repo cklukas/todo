@@ -1,28 +1,29 @@
-package cmd
+package ui
 
 import (
 	"testing"
 
+	"github.com/cklukas/todo/internal/util"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 func TestParsePrefix(t *testing.T) {
-	color, text := parsePrefix("[blue]hello")
+	color, text := util.ParsePrefix("[blue]hello")
 	if color != "blue" || text != "hello" {
 		t.Fatalf("expected blue/hello got %s/%s", color, text)
 	}
-	color, text = parsePrefix("hello")
+	color, text = util.ParsePrefix("hello")
 	if color != "" || text != "hello" {
 		t.Fatalf("expected empty/hello got %s/%s", color, text)
 	}
 }
 
 func TestApplyPrefix(t *testing.T) {
-	if out := applyPrefix("hello", "blue"); out != "[blue]hello" {
+	if out := util.ApplyPrefix("hello", "blue"); out != "[blue]hello" {
 		t.Fatalf("applyPrefix failed: %s", out)
 	}
-	if out := applyPrefix("[red]hello", ""); out != "hello" {
+	if out := util.ApplyPrefix("[red]hello", ""); out != "hello" {
 		t.Fatalf("applyPrefix remove failed: %s", out)
 	}
 }

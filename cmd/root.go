@@ -14,6 +14,10 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
+
+	"github.com/cklukas/todo/internal/config"
+	"github.com/cklukas/todo/internal/model"
+	"github.com/cklukas/todo/internal/ui"
 )
 
 func CreateDir(path string) (string, error) {
@@ -41,7 +45,7 @@ func main(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
-		if m, err := loadLastModeFromSettings(usr.HomeDir); err == nil && len(m) > 0 {
+		if m, err := config.LoadLastModeFromSettings(usr.HomeDir); err == nil && len(m) > 0 {
 			mode = m
 			if mode != "main" {
 				todoDir = path.Join(baseTodoDir, "mode", mode)
@@ -75,7 +79,7 @@ func main(cmd *cobra.Command, args []string) error {
 			break
 		}
 		// store selected mode for future runs
-		if err := saveLastModeToSettings(usr.HomeDir, nextMode); err != nil {
+		if err := config.SaveLastModeToSettings(usr.HomeDir, nextMode); err != nil {
 			log.Print(err)
 		}
 		if nextMode == "main" {
@@ -95,7 +99,7 @@ func main(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
+func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 	bAbout := tview.NewButton("[brown::-]F1 [black::-]About")
 	bAbout.SetBackgroundColor(tcell.ColorLightGray)
 	bAbout.SetSelectedFunc(lanes.CmdAbout)
@@ -138,7 +142,7 @@ func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
 
 	bMoveHelp := tview.NewButton("")
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
-	lanes.bMoveHelp = bMoveHelp
+	lanes.SetMoveHelpButton(bMoveHelp)
 
 	defaultStatusBarMenuItems := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(bAbout, 10, 1, false).
@@ -156,7 +160,7 @@ func getStatusBar(lanes *Lanes, mode string) *tview.Flex {
 	return defaultStatusBarMenuItems
 }
 
-func JsonWatcher(watcher *fsnotify.Watcher, content *ToDoContent, lanes *Lanes, app *tview.Application) {
+func JsonWatcher(watcher *fsnotify.Watcher, content *model.ToDoContent, lanes *ui.Lanes, app *tview.Application) {
 	appLocked := false
 	for {
 		select {
@@ -221,7 +225,7 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 
 	fname := path.Join(usr.HomeDir, todoDir, "todo.json")
 
-	content := new(ToDoContent)
+	content := new(model.ToDoContent)
 	err = content.ReadFromFile(fname)
 	if err != nil {
 		content.InitializeNew()
@@ -234,17 +238,17 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 	}
 
 	app := tview.NewApplication()
-	lanes := NewLanes(content, app, mode, path.Join(usr.HomeDir, todoDirModes))
+	lanes := ui.NewLanes(content, app, mode, path.Join(usr.HomeDir, todoDirModes), AppVersion)
 
 	// lanes.active = nextModeLaneFocus
 	// lanes.lastActive = nextModeLaneFocus
 
-	for idx := range lanes.lanes {
-		if lanes.active == idx {
-			lanes.lanes[idx].SetSelectedBackgroundColor(tcell.ColorLightBlue)
-			lanes.lanes[idx].SetSelectedTextColor(tcell.ColorBlack)
+	for idx, list := range lanes.Lists() {
+		if lanes.ActiveIndex() == idx {
+			list.SetSelectedBackgroundColor(tcell.ColorLightBlue)
+			list.SetSelectedTextColor(tcell.ColorBlack)
 		} else {
-			lanes.lanes[idx].SetSelectedStyle(tcell.StyleDefault)
+			list.SetSelectedStyle(tcell.StyleDefault)
 		}
 	}
 
@@ -275,7 +279,7 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 		log.Fatalf("Error running application: %v\n", err)
 	}
 
-	return lanes.nextMode, lanes.nextLaneFocus, content.Save()
+	return lanes.NextMode(), lanes.NextLaneFocus(), content.Save()
 }
 
 var rootCmd = &cobra.Command{

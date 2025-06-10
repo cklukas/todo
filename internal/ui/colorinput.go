@@ -1,8 +1,6 @@
-package cmd
+package ui
 
 import (
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -80,33 +78,4 @@ func (c *ColorInput) InputHandler() func(event *tcell.EventKey, setFocus func(p 
 			handler(event, setFocus)
 		}
 	})
-}
-
-// removePrefix returns text without a leading color prefix.
-func removePrefix(text string) string {
-	if strings.HasPrefix(text, "[") {
-		if idx := strings.Index(text, "]"); idx > 0 {
-			return text[idx+1:]
-		}
-	}
-	return text
-}
-
-// applyPrefix adds or replaces the color prefix.
-func applyPrefix(text, color string) string {
-	base := removePrefix(text)
-	if color == "" || color == "default" {
-		return base
-	}
-	return "[" + color + "]" + base
-}
-
-// parsePrefix splits a title into color prefix and the remaining text.
-func parsePrefix(text string) (string, string) {
-	if strings.HasPrefix(text, "[") {
-		if idx := strings.Index(text, "]"); idx > 0 {
-			return strings.ToLower(text[1:idx]), text[idx+1:]
-		}
-	}
-	return "", text
 }
