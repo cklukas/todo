@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -22,7 +24,7 @@ func (m *ColorModal) GetFrame() *tview.Frame {
 func NewColorModal(title, current string) *ColorModal {
 	form := tview.NewForm()
 	m := &ColorModal{Form: form, DialogHeight: 7, frame: tview.NewFrame(form), optionIndex: 0,
-		options: []string{"", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "lightblue", "lightgreen", "lightcyan", "lightcoral", "fuchsia", "yellow"}, done: nil}
+		options: []string{"", "black", "blue", "green", "aqua", "red", "purple", "brown", "silver", "gray", "darkblue", "darkgreen", "darkcyan", "darkred", "fuchsia", "yellow"}, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -32,15 +34,30 @@ func NewColorModal(title, current string) *ColorModal {
 
 	labels := make([]string, len(m.options))
 	idx := 0
+	maxLen := 0
 	for i, v := range m.options {
+		name := v
 		if i == 0 || v == "" {
-			labels[i] = "default"
-		} else {
-			labels[i] = "[black:" + v + "]" + v
+			name = "default"
+		}
+		if len(name) > maxLen {
+			maxLen = len(name)
 		}
 		if v == current {
 			idx = i
 		}
+	}
+	for i, v := range m.options {
+		name := v
+		var style string
+		if i == 0 || v == "" {
+			name = "default"
+			style = "[black:white]"
+		} else {
+			style = "[black:" + v + "]"
+		}
+		pad := strings.Repeat(" ", maxLen-len(name))
+		labels[i] = style + name + pad
 	}
 	m.optionIndex = idx
 	form.AddDropDown("Color:", labels, idx, func(option string, index int) {

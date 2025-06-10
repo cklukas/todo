@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"github.com/cklukas/todo/internal/util"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"strings"
 	"testing"
 )
 
@@ -10,7 +12,7 @@ func TestNewColorModalDefaultSelected(t *testing.T) {
 	dlg := NewColorModal("Color", "")
 	item := dlg.GetFormItem(0).(*tview.DropDown)
 	_, text := item.GetCurrentOption()
-	if text != "default" {
+	if strings.TrimSpace(util.RemovePrefix(text)) != "default" {
 		t.Fatalf("expected initial option 'default', got '%s'", text)
 	}
 	if dlg.GetButtonIndex("Cancel") == -1 {
