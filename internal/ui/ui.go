@@ -35,6 +35,7 @@ type Lanes struct {
 	addMode         *ModalInput
 
 	bMoveHelp *tview.Button
+	clock     *tview.TextView
 
 	dialogActive     bool
 	activeDialog     dialogWithFrame
@@ -216,6 +217,10 @@ func (l *Lanes) SetMoveHelpButton(b *tview.Button) {
 	l.bMoveHelp = b
 }
 
+func (l *Lanes) SetClock(tv *tview.TextView) {
+	l.clock = tv
+}
+
 func (l *Lanes) Lists() []*tview.List {
 	return l.lanes
 }
@@ -230,4 +235,29 @@ func (l *Lanes) NextMode() string {
 
 func (l *Lanes) NextLaneFocus() int {
 	return l.nextLaneFocus
+}
+
+func (l *Lanes) StartClock() {
+	if l.clock == nil {
+		return
+	}
+	ticker := time.NewTicker(time.Second)
+	go func() {
+		for now := range ticker.C {
+			l.app.QueueUpdateDraw(func() {
+				box := tview.NewBox()
+				l.app.ResizeToFullScreen(box)
+				_, _, width, _ := box.GetRect()
+				labelWidth := tview.TaggedStringWidth(l.bMoveHelp.GetLabel())
+				available := width - 89 - labelWidth
+				if available >= 19 {
+					l.clock.SetText(now.Format(clockDateLayout() + " 15:04:05"))
+				} else if available >= 8 {
+					l.clock.SetText(now.Format("15:04:05"))
+				} else {
+					l.clock.SetText("")
+				}
+			})
+		}
+	}()
 }

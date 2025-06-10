@@ -140,6 +140,11 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
 	lanes.SetMoveHelpButton(bMoveHelp)
 
+	tvClock := tview.NewTextView()
+	tvClock.SetBackgroundColor(tcell.ColorLightGray)
+	tvClock.SetTextAlign(tview.AlignRight)
+	lanes.SetClock(tvClock)
+
 	defaultStatusBarMenuItems := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(bAbout, 10, 1, false).
 		AddItem(bAddToDo, 13, 1, false).
@@ -150,7 +155,8 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 		AddItem(bLanesCommands, 9, 1, false).
 		AddItem(bExit, 10, 1, false).
 		AddItem(bMode, 2+len(mode), 1, false).
-		AddItem(bMoveHelp, 38, 1, false)
+		AddItem(bMoveHelp, 38, 1, false).
+		AddItem(tvClock, 20, 1, false)
 
 	defaultStatusBarMenuItems.SetBackgroundColor(tcell.ColorLightGray)
 
@@ -256,6 +262,8 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 		AddItem(lanes.GetUi(), 0, 1, true).
 		AddItem(defaultStatusBarMenuItems, 1, 1, false)
 	app.SetRoot(layout, true).EnableMouse(true)
+
+	lanes.StartClock()
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

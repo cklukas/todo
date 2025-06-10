@@ -21,3 +21,19 @@ func TestStatusBarUsesGrayBackground(t *testing.T) {
 		t.Fatalf("status bar background color %v, want %v", status.GetBackgroundColor(), tcell.ColorLightGray)
 	}
 }
+
+func TestStatusBarContainsClock(t *testing.T) {
+	c := &model.ToDoContent{}
+	c.InitializeNew()
+	app := tview.NewApplication()
+	lanes := ui.NewLanes(c, app, "main", t.TempDir(), "")
+
+	status := getStatusBar(lanes, "main")
+
+	if status.GetItemCount() != 11 {
+		t.Fatalf("status bar item count %d, want %d", status.GetItemCount(), 11)
+	}
+	if _, ok := status.GetItem(10).(*tview.TextView); !ok {
+		t.Fatalf("last status bar item should be TextView")
+	}
+}

@@ -101,3 +101,12 @@ func isoTimeToLocal(iso string) string {
 	}
 	return t.Local().Format(dateTimeLayout())
 }
+
+// clockDateLayout returns the date layout for the clock without the year.
+// The order of day and month depends on the locale.
+func clockDateLayout() string {
+	if localeUS() {
+		return "Mon Jan 02"
+	}
+	return "Mon 02 Jan"
+}
