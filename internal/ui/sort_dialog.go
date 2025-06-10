@@ -1,10 +1,12 @@
-package cmd
+package ui
 
 import (
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/cklukas/todo/internal/model"
 )
 
 // SortModal is a simple modal with a dropdown for sort mode
@@ -24,7 +26,7 @@ func (m *SortModal) GetFrame() *tview.Frame {
 func NewSortModal(title, lane string, current string) *SortModal {
 	form := tview.NewForm()
 	m := &SortModal{Form: form, DialogHeight: 7, frame: tview.NewFrame(form), optionIndex: 0,
-		options: []string{"", SortColor, SortDue, SortCreated, SortModified, SortPriority}, done: nil}
+		options: []string{"", model.SortColor, model.SortDue, model.SortCreated, model.SortModified, model.SortPriority}, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {

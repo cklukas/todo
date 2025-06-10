@@ -1,4 +1,4 @@
-package cmd
+package ui
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/cklukas/todo/internal/model"
+	"github.com/cklukas/todo/internal/util"
 )
 
 type dialogWithFrame interface {
@@ -18,7 +21,8 @@ type Lanes struct {
 	nextLaneFocus   int
 	todoDirModes    string
 	mode            string
-	content         *ToDoContent
+	appVersion      string
+	content         *model.ToDoContent
 	lanes           []*tview.List
 	active          int
 	lastActive      int
@@ -76,7 +80,7 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 			title += " " + suffix
 		}
 		secondary := item.Secondary
-		if mark := priorityMark(item.Priority); mark != "" {
+		if mark := model.PriorityMark(item.Priority); mark != "" {
 			if len(secondary) > 0 {
 				secondary += " "
 			}
@@ -95,21 +99,11 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 				}
 			}
 		}
-		l.lanes[laneIndex].SetCurrentItem(normPos(active, num))
+		l.lanes[laneIndex].SetCurrentItem(util.NormPos(active, num))
 	}
 
 	l.lanes[laneIndex].SetTitle(l.content.GetLaneTitle(laneIndex))
 	return nil
-}
-
-func normPos(pos, length int) int {
-	for pos < 0 {
-		pos += length
-	}
-	if length > 0 {
-		pos %= length
-	}
-	return pos
 }
 
 func dueSuffix(due string, now time.Time) string {
@@ -134,12 +128,12 @@ func dueSuffix(due string, now time.Time) string {
 }
 
 func (l *Lanes) setActive() {
-	l.active = normPos(l.active, len(l.lanes))
+	l.active = util.NormPos(l.active, len(l.lanes))
 	l.app.SetFocus(l.lanes[l.active])
 }
 
 func (l *Lanes) setActiveIndex(index int) {
-	l.active = normPos(index, len(l.lanes))
+	l.active = util.NormPos(index, len(l.lanes))
 	l.app.SetFocus(l.lanes[l.active])
 }
 
@@ -150,7 +144,7 @@ func (l *Lanes) saveActive() int {
 	return l.lastActive
 }
 
-func (l *Lanes) currentItem() *Item {
+func (l *Lanes) currentItem() *model.Item {
 	pos := l.lanes[l.active].GetCurrentItem()
 	content := l.content.GetLaneItems(l.active)
 	if pos < 0 || pos >= len(content) {
@@ -198,4 +192,24 @@ func (l *Lanes) hideDialog(name string) {
 	l.activeDialog = nil
 	l.pages.HidePage(name)
 	l.setActive()
+}
+
+func (l *Lanes) SetMoveHelpButton(b *tview.Button) {
+	l.bMoveHelp = b
+}
+
+func (l *Lanes) Lists() []*tview.List {
+	return l.lanes
+}
+
+func (l *Lanes) ActiveIndex() int {
+	return l.active
+}
+
+func (l *Lanes) NextMode() string {
+	return l.nextMode
+}
+
+func (l *Lanes) NextLaneFocus() int {
+	return l.nextLaneFocus
 }

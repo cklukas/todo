@@ -1,4 +1,4 @@
-package cmd
+package model
 
 import (
 	"sort"
@@ -14,7 +14,7 @@ const (
 	SortPriority = "priority"
 )
 
-func priorityMark(p int) string {
+func PriorityMark(p int) string {
 	switch p {
 	case 1:
 		return "↑"

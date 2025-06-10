@@ -1,4 +1,4 @@
-package cmd
+package ui
 
 func (l *Lanes) CmdSortDialog() {
 	l.saveActive()

@@ -1,6 +1,10 @@
-package cmd
+package model
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/cklukas/todo/internal/util"
+)
 
 func TestInsertNewLane(t *testing.T) {
 	c := &ToDoContent{}
@@ -79,14 +83,14 @@ func TestNormPos(t *testing.T) {
 		{6, 5, 1},
 	}
 	for _, tc := range tests {
-		if got := normPos(tc.pos, tc.length); got != tc.exp {
+		if got := util.NormPos(tc.pos, tc.length); got != tc.exp {
 			t.Errorf("normPos(%d,%d)=%d expected %d", tc.pos, tc.length, got, tc.exp)
 		}
 	}
 }
 
 func TestSplit(t *testing.T) {
-	words, err := Split("one 'two three' four")
+	words, err := util.Split("one 'two three' four")
 	if err != nil {
 		t.Fatalf("Split returned error: %v", err)
 	}

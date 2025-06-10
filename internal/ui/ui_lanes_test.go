@@ -1,18 +1,20 @@
-package cmd
+package ui
 
 import (
+	"testing"
+
+	"github.com/cklukas/todo/internal/model"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"testing"
 )
 
 func TestNoSelectionChangeDuringEdit(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	c.AddItem(0, 0, "task 1", "", 2, "", "")
 	c.AddItem(0, 1, "task 2", "", 2, "", "")
 	app := tview.NewApplication()
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdEditTask()
 
@@ -27,12 +29,12 @@ func TestNoSelectionChangeDuringEdit(t *testing.T) {
 }
 
 func TestNoSelectionChangeDuringAdd(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	c.AddItem(0, 0, "task 1", "", 2, "", "")
 	c.AddItem(0, 1, "task 2", "", 2, "", "")
 	app := tview.NewApplication()
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdAddTask()
 
@@ -45,10 +47,10 @@ func TestNoSelectionChangeDuringAdd(t *testing.T) {
 }
 
 func TestAddTaskFocus(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	app := tview.NewApplication()
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdAddTask()
 
@@ -58,11 +60,11 @@ func TestAddTaskFocus(t *testing.T) {
 }
 
 func TestEditTaskFocus(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	c.AddItem(0, 0, "task", "", 2, "", "")
 	app := tview.NewApplication()
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdEditTask()
 
@@ -72,7 +74,7 @@ func TestEditTaskFocus(t *testing.T) {
 }
 
 func TestMouseCaptureDuringAdd(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	c.AddItem(0, 0, "task 1", "", 2, "", "")
 	app := tview.NewApplication()
@@ -81,7 +83,7 @@ func TestMouseCaptureDuringAdd(t *testing.T) {
 		called = true
 		return event, action
 	})
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdAddTask()
 	event := tcell.NewEventMouse(50, 50, tcell.Button1, 0)
@@ -101,7 +103,7 @@ func TestMouseCaptureDuringAdd(t *testing.T) {
 }
 
 func TestInputCaptureDuringAdd(t *testing.T) {
-	c := &ToDoContent{}
+	c := &model.ToDoContent{}
 	c.InitializeNew()
 	app := tview.NewApplication()
 	called := false
@@ -109,7 +111,7 @@ func TestInputCaptureDuringAdd(t *testing.T) {
 		called = true
 		return nil
 	})
-	l := NewLanes(c, app, "", t.TempDir())
+	l := NewLanes(c, app, "", t.TempDir(), "")
 
 	l.CmdAddTask()
 	key := tcell.NewEventKey(tcell.KeyF1, rune(0), tcell.ModNone)

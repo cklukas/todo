@@ -1,4 +1,4 @@
-package cmd
+package ui
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/cklukas/todo/internal/util"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -75,21 +76,21 @@ func (l *Lanes) CmdSelectNote() {
 
 func (l *Lanes) up() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
-	newPos := normPos(currentPos-1, l.lanes[l.active].GetItemCount())
+	newPos := util.NormPos(currentPos-1, l.lanes[l.active].GetItemCount())
 	l.content.MoveItem(l.active, currentPos, l.active, newPos)
 	l.redrawLane(l.active, newPos)
 }
 
 func (l *Lanes) down() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
-	newPos := normPos(currentPos+1, l.lanes[l.active].GetItemCount())
+	newPos := util.NormPos(currentPos+1, l.lanes[l.active].GetItemCount())
 	l.content.MoveItem(l.active, currentPos, l.active, newPos)
 	l.redrawLane(l.active, newPos)
 }
 
 func (l *Lanes) moveSelectionLeft() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
-	newLane := normPos(l.active-1, len(l.lanes))
+	newLane := util.NormPos(l.active-1, len(l.lanes))
 	newPos := l.lanes[newLane].GetCurrentItem()
 	l.content.MoveItem(l.active, currentPos, newLane, newPos)
 	l.redrawLane(l.active, currentPos)
@@ -101,7 +102,7 @@ func (l *Lanes) moveSelectionLeft() {
 
 func (l *Lanes) moveSelectionRight() {
 	currentPos := l.lanes[l.active].GetCurrentItem()
-	newLane := normPos(l.active+1, len(l.lanes))
+	newLane := util.NormPos(l.active+1, len(l.lanes))
 	newPos := l.lanes[newLane].GetCurrentItem()
 	l.content.MoveItem(l.active, currentPos, newLane, newPos)
 	l.redrawLane(l.active, currentPos)
@@ -176,7 +177,7 @@ func (l *Lanes) editNote() {
 					}
 				}
 
-				words, err := Split(editorCmd)
+				words, err := util.Split(editorCmd)
 				if err != nil {
 					l.app.Stop()
 					log.Fatal(err)

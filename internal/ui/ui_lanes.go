@@ -1,4 +1,4 @@
-package cmd
+package ui
 
 import (
 	"fmt"
@@ -9,6 +9,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/cklukas/todo/internal/model"
+	"github.com/cklukas/todo/internal/util"
 )
 
 func (l *Lanes) GetActiveLaneName() string {
@@ -24,25 +27,26 @@ func min(a, b int) int {
 }
 
 func (l *Lanes) RedrawAllLanes() {
-	l.content.readWriteMutex.Lock()
-	defer l.content.readWriteMutex.Unlock()
+	l.content.Lock()
+	defer l.content.Unlock()
 
 	for laneIdx := 0; laneIdx < min(len(l.lanes), len(l.content.Items)); laneIdx++ {
 		if len(l.content.Items[laneIdx]) == 0 {
 			continue
 		}
 		currentIndexInLine := l.lanes[laneIdx].GetCurrentItem()
-		validIndexInLine := normPos(currentIndexInLine, len(l.content.Items[laneIdx]))
+		validIndexInLine := util.NormPos(currentIndexInLine, len(l.content.Items[laneIdx]))
 		l.redrawLane(laneIdx, validIndexInLine)
 	}
 }
 
-func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes string) *Lanes {
+func NewLanes(content *model.ToDoContent, app *tview.Application, mode, todoDirModes, version string) *Lanes {
 	l := &Lanes{
 		nextMode:         "",
 		nextLaneFocus:    0,
 		todoDirModes:     todoDirModes,
 		mode:             mode,
+		appVersion:       version,
 		content:          content,
 		lanes:            make([]*tview.List, content.GetNumLanes()),
 		active:           0,
@@ -122,12 +126,12 @@ func NewLanes(content *ToDoContent, app *tview.Application, mode, todoDirModes s
 
 	// help := tview.NewModal().
 	help := tview.NewModal()
-	aboutText := fmt.Sprintf("Version: %s", AppVersion)
-	if isLocalDevelopmentVersion(AppVersion) {
+	aboutText := fmt.Sprintf("Version: %s", l.appVersion)
+	if util.IsLocalDevelopmentVersion(l.appVersion) {
 		aboutText += " (local development version)"
 	}
 	aboutText += "\n- developed by C. Klukas -\n\n- adapted from toukan (https://github.com/witchard/toukan) -\n\nUsage/Keys:\nEnter/space - mark task, cursor keys - move marked task, +/Insert - add, e - edit, Del/d - delete task, n - note, a - archive, Tab - switch lane, m - select mode, q - quit"
-	if tag, newer, err := latestReleaseInfo(AppVersion); err == nil && newer {
+	if tag, newer, err := util.LatestReleaseInfo(l.appVersion); err == nil && newer {
 		if exe, err := os.Executable(); err == nil {
 			aboutText += fmt.Sprintf("\n\nA newer version %s is available.\nUse \"%s version --update\" to update.", tag, exe)
 		}

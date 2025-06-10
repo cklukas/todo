@@ -1,12 +1,12 @@
-package cmd
+package model
 
 import "testing"
 
 func TestPriorityMark(t *testing.T) {
-	if m := priorityMark(1); m == "" {
+	if m := PriorityMark(1); m == "" {
 		t.Fatalf("high priority mark empty")
 	}
-	if m := priorityMark(2); m != "" {
+	if m := PriorityMark(2); m != "" {
 		t.Fatalf("default priority should be empty")
 	}
 }

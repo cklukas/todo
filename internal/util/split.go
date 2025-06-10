@@ -1,4 +1,4 @@
-package cmd
+package util
 
 // source: https://github.com/kballard/go-shellquote/blob/master/unquote.go
 // MIT License

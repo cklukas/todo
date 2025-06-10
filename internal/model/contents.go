@@ -1,4 +1,4 @@
-package cmd
+package model
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cklukas/todo/internal/util"
 	"github.com/flytam/filenamify"
 	"github.com/google/uuid"
 )
@@ -38,6 +39,14 @@ type ToDoContent struct {
 	archiveFolder  string     `json:"-"`
 	backupFolder   string     `json:"-"`
 	readWriteMutex sync.Mutex `json:"-"`
+}
+
+func (c *ToDoContent) Lock() {
+	c.readWriteMutex.Lock()
+}
+
+func (c *ToDoContent) Unlock() {
+	c.readWriteMutex.Unlock()
 }
 
 func (c *ToDoContent) InitializeNew() {
@@ -206,7 +215,7 @@ func (c *ToDoContent) normalize() {
 			}
 			if item.Color == "" {
 				var col string
-				col, item.Title = parsePrefix(item.Title)
+				col, item.Title = util.ParsePrefix(item.Title)
 				item.Color = col
 			}
 			if item.UserName == "" {

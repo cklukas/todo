@@ -1,4 +1,4 @@
-package cmd
+package config
 
 import (
 	"os"
@@ -10,11 +10,11 @@ func TestSaveLoadLastMode(t *testing.T) {
 	dir := t.TempDir()
 
 	mode := "work"
-	if err := saveLastModeToSettings(dir, mode); err != nil {
+	if err := SaveLastModeToSettings(dir, mode); err != nil {
 		t.Fatalf("save failed: %v", err)
 	}
 
-	got, err := loadLastModeFromSettings(dir)
+	got, err := LoadLastModeFromSettings(dir)
 	if err != nil {
 		t.Fatalf("load failed: %v", err)
 	}
