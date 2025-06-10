@@ -72,6 +72,9 @@ func NewLanes(content *model.ToDoContent, app *tview.Application, mode, todoDirM
 	flex := tview.NewFlex()
 	for i := 0; i < l.content.GetNumLanes(); i++ {
 		l.lanes[i] = tview.NewList()
+		if col := l.content.GetLaneColor(i); col != "" {
+			l.lanes[i].SetBackgroundColor(tcell.GetColor(col))
+		}
 		xi := i
 		l.lanes[i].SetFocusFunc(func() {
 			l.lanes[xi].SetSelectedStyle(tcell.StyleDefault)
@@ -266,9 +269,16 @@ func (l *Lanes) CmdLanesCmds() {
 	lanePage := tview.NewModal().
 		SetTitle(" Lane Commands ").
 		SetText(fmt.Sprintf("Rename lane '%v', add a new lane, or remove it (tasks of current lane are moved to another lane or archived):", l.GetActiveLaneName())).
-		AddButtons([]string{"Rename", "Add to left", "Add to right", "Merge/Remove", "Cancel"}).
+		AddButtons([]string{"Sort Tasks", "Color", "Rename", "Add to left", "Add to right", "Merge/Remove", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			switch buttonLabel {
+			case "Sort Tasks":
+				l.pages.HidePage("laneDialog")
+				l.CmdSortDialog()
+				return
+			case "Color":
+				l.laneColorCommand(initActiveLane)
+				return
 			case "Rename":
 				l.renameLaneCommand(initActiveLane)
 				return
@@ -308,6 +318,23 @@ func (l *Lanes) renameLaneCommand(initActiveLane int) {
 
 	l.pages.HidePage("laneDialog")
 	l.pages.AddPage("addLane", addLaneDialog, false, true)
+}
+
+func (l *Lanes) laneColorCommand(initActiveLane int) {
+	colorDlg := NewColorModal("Lane Color", l.content.GetLaneColor(l.active))
+	colorDlg.SetDoneFunc(func(color string, success bool) {
+		l.pages.HidePage("laneColor")
+		l.setActiveIndex(initActiveLane)
+		if success {
+			l.content.SetLaneColor(initActiveLane, color)
+			l.redrawLane(initActiveLane, l.lanes[initActiveLane].GetCurrentItem())
+			l.content.Save()
+		}
+	})
+
+	l.pages.HidePage("laneDialog")
+	l.pages.AddPage("laneColor", colorDlg, false, true)
+	l.showDialog("laneColor", colorDlg)
 }
 
 func (l *Lanes) addLaneLeftRightCommand(addToLeft bool, initActiveLane int) {

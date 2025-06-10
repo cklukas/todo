@@ -35,6 +35,7 @@ type ToDoContent struct {
 	Titles         []string
 	Items          [][]Item
 	SortModes      []string
+	LaneColors     []string
 	fname          string     `json:"-"`
 	archiveFolder  string     `json:"-"`
 	backupFolder   string     `json:"-"`
@@ -53,6 +54,7 @@ func (c *ToDoContent) InitializeNew() {
 	c.Titles = []string{"To Do", "Doing", "Done"}
 	c.Items = make([][]Item, 3)
 	c.SortModes = make([]string, 3)
+	c.LaneColors = make([]string, 3)
 }
 
 func (c *ToDoContent) ReadFromFile(fname string) error {
@@ -92,6 +94,9 @@ func (c *ToDoContent) RemoveLane(lane int) {
 	if len(c.SortModes) > lane {
 		c.SortModes = append(c.SortModes[:lane], c.SortModes[lane+1:]...)
 	}
+	if len(c.LaneColors) > lane {
+		c.LaneColors = append(c.LaneColors[:lane], c.LaneColors[lane+1:]...)
+	}
 }
 
 func (c *ToDoContent) InsertNewLane(addToLeft bool, laneTitle string, relativeToLaneIdx int) int {
@@ -105,6 +110,7 @@ func (c *ToDoContent) InsertNewLane(addToLeft bool, laneTitle string, relativeTo
 	c.Items = append(c.Items[:i], append(newItemList, c.Items[i:]...)...)
 	c.Titles = append(c.Titles[:i], append([]string{laneTitle}, c.Titles[i:]...)...)
 	c.SortModes = append(c.SortModes[:i], append([]string{""}, c.SortModes[i:]...)...)
+	c.LaneColors = append(c.LaneColors[:i], append([]string{""}, c.LaneColors[i:]...)...)
 
 	return i
 }
@@ -120,6 +126,19 @@ func (c *ToDoContent) SetLaneSort(idx int, mode string) {
 	if idx >= 0 && idx < len(c.SortModes) {
 		c.SortModes[idx] = mode
 	}
+}
+
+func (c *ToDoContent) SetLaneColor(idx int, color string) {
+	if idx >= 0 && idx < len(c.LaneColors) {
+		c.LaneColors[idx] = color
+	}
+}
+
+func (c *ToDoContent) GetLaneColor(idx int) string {
+	if idx >= 0 && idx < len(c.LaneColors) {
+		return c.LaneColors[idx]
+	}
+	return ""
 }
 
 func (c *ToDoContent) SortLane(idx int) {
@@ -195,6 +214,9 @@ func (c *ToDoContent) normalize() {
 
 	if len(c.SortModes) != len(c.Titles) {
 		c.SortModes = make([]string, len(c.Titles))
+	}
+	if len(c.LaneColors) != len(c.Titles) {
+		c.LaneColors = make([]string, len(c.Titles))
 	}
 
 	for li := range c.Items {
