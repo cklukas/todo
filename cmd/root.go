@@ -128,10 +128,6 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 	bLanesCommands.SetBackgroundColor(tcell.ColorLightGray)
 	bLanesCommands.SetSelectedFunc(lanes.CmdLanesCmds)
 
-	bSort := tview.NewButton("[red::-]F8 [black::-]Sort")
-	bSort.SetBackgroundColor(tcell.ColorLightGray)
-	bSort.SetSelectedFunc(lanes.CmdSortDialog)
-
 	bExit := tview.NewButton("[brown::-]F10 [black::-]Exit")
 	bExit.SetBackgroundColor(tcell.ColorLightGray)
 	bExit.SetSelectedFunc(lanes.CmdExit)
@@ -152,7 +148,6 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 		AddItem(bArchiveToDo, 13, 1, false).
 		AddItem(bSelectToDo, 10, 1, false).
 		AddItem(bLanesCommands, 9, 1, false).
-		AddItem(bSort, 9, 1, false).
 		AddItem(bExit, 10, 1, false).
 		AddItem(bMode, 2+len(mode), 1, false).
 		AddItem(bMoveHelp, 38, 1, false)

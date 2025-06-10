@@ -103,6 +103,11 @@ func (l *Lanes) redrawLane(laneIndex, active int) error {
 	}
 
 	l.lanes[laneIndex].SetTitle(l.content.GetLaneTitle(laneIndex))
+	if col := l.content.GetLaneColor(laneIndex); col != "" {
+		l.lanes[laneIndex].SetBackgroundColor(tcell.GetColor(col))
+	} else {
+		l.lanes[laneIndex].SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+	}
 	return nil
 }
 

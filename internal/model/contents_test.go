@@ -117,3 +117,16 @@ func TestNormalizeSortModes(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeLaneColors(t *testing.T) {
+	c := &ToDoContent{Titles: []string{"A", "B"}, Items: make([][]Item, 2)}
+	c.normalize()
+	if len(c.LaneColors) != 2 {
+		t.Fatalf("expected 2 lane colors got %d", len(c.LaneColors))
+	}
+	for i, col := range c.LaneColors {
+		if col != "" {
+			t.Fatalf("lane color %d should be empty", i)
+		}
+	}
+}

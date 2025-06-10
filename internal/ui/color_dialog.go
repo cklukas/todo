@@ -1,16 +1,12 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-
-	"github.com/cklukas/todo/internal/model"
 )
 
-// SortModal is a simple modal with a dropdown for sort mode
-type SortModal struct {
+// ColorModal is a simple modal with a dropdown for lane color
+type ColorModal struct {
 	*tview.Form
 	DialogHeight int
 	frame        *tview.Frame
@@ -19,14 +15,14 @@ type SortModal struct {
 	done         func(string, bool)
 }
 
-func (m *SortModal) GetFrame() *tview.Frame {
+func (m *ColorModal) GetFrame() *tview.Frame {
 	return m.frame
 }
 
-func NewSortModal(title, lane string, current string) *SortModal {
+func NewColorModal(title, current string) *ColorModal {
 	form := tview.NewForm()
-	m := &SortModal{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), optionIndex: 0,
-		options: []string{"", model.SortColor, model.SortDue, model.SortCreated, model.SortModified, model.SortPriority}, done: nil}
+	m := &ColorModal{Form: form, DialogHeight: 7, frame: tview.NewFrame(form), optionIndex: 0,
+		options: []string{"", "blue", "green", "red", "yellow"}, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
@@ -34,7 +30,7 @@ func NewSortModal(title, lane string, current string) *SortModal {
 		}
 	})
 
-	labels := []string{"manual", "color", "due", "created", "modified", "priority"}
+	labels := []string{"default", "blue", "green", "red", "yellow"}
 	idx := 0
 	for i, v := range m.options {
 		if v == current {
@@ -43,10 +39,9 @@ func NewSortModal(title, lane string, current string) *SortModal {
 		}
 	}
 	m.optionIndex = idx
-	form.AddDropDown("Sort:", labels, idx, func(option string, index int) {
+	form.AddDropDown("Color:", labels, idx, func(option string, index int) {
 		m.optionIndex = index
 	})
-	m.frame.AddText(fmt.Sprintf("Sort tasks in lane '%s'", lane), false, 0, tcell.ColorDarkGray)
 	m.SetButtonsAlign(tview.AlignCenter).
 		SetButtonBackgroundColor(tview.Styles.PrimitiveBackgroundColor).
 		SetButtonTextColor(tview.Styles.PrimaryTextColor).
@@ -64,7 +59,7 @@ func NewSortModal(title, lane string, current string) *SortModal {
 		}
 	})
 
-	m.frame.SetTitle(fmt.Sprintf(" %v ", title))
+	m.frame.SetTitle(" " + title + " ")
 	m.frame.SetBorders(0, 0, 1, 0, 0, 0).
 		SetBorder(true).
 		SetBackgroundColor(tview.Styles.ContrastBackgroundColor).
@@ -73,13 +68,12 @@ func NewSortModal(title, lane string, current string) *SortModal {
 	return m
 }
 
-func (m *SortModal) SetDoneFunc(handler func(string, bool)) {
+func (m *ColorModal) SetDoneFunc(handler func(string, bool)) {
 	m.done = handler
 }
 
 // Draw draws this modal with a surrounding frame.
-func (m *SortModal) Draw(screen tcell.Screen) {
-	// Determine width similar to ModalInput.
+func (m *ColorModal) Draw(screen tcell.Screen) {
 	buttonsWidth := 30
 	screenWidth, screenHeight := screen.Size()
 	width := screenWidth / 3
@@ -91,42 +85,35 @@ func (m *SortModal) Draw(screen tcell.Screen) {
 	x := (screenWidth - width) / 2
 	y := (screenHeight - height) / 2
 	m.SetRect(x, y, width, height)
-
-	// Draw the frame.
 	m.frame.SetRect(x, y, width, height)
 	m.frame.Draw(screen)
 }
 
-// Focus delegates focus to the embedded form.
-func (m *SortModal) Focus(delegate func(p tview.Primitive)) {
+func (m *ColorModal) Focus(delegate func(p tview.Primitive)) {
 	delegate(m.Form)
 }
 
-// HasFocus returns whether the form has focus.
-func (m *SortModal) HasFocus() bool {
+func (m *ColorModal) HasFocus() bool {
 	return m.Form.HasFocus()
 }
 
-// SetFocus passes the focus index to the embedded form.
-func (m *SortModal) SetFocus(index int) *SortModal {
+func (m *ColorModal) SetFocus(index int) *ColorModal {
 	m.Form.SetFocus(index)
 	return m
 }
 
-// MouseHandler forwards mouse events to the form and captures clicks inside the dialog.
-func (m *SortModal) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
-	return m.WrapMouseHandler(func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (consumed bool, capture tview.Primitive) {
-		consumed, capture = m.Form.MouseHandler()(action, event, setFocus)
+func (m *ColorModal) MouseHandler() func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (bool, tview.Primitive) {
+	return m.WrapMouseHandler(func(action tview.MouseAction, event *tcell.EventMouse, setFocus func(p tview.Primitive)) (bool, tview.Primitive) {
+		consumed, capture := m.Form.MouseHandler()(action, event, setFocus)
 		if !consumed && action == tview.MouseLeftDown && m.InRect(event.Position()) {
 			setFocus(m)
 			consumed = true
 		}
-		return
+		return consumed, capture
 	})
 }
 
-// InputHandler returns the handler for this primitive.
-func (m *SortModal) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+func (m *ColorModal) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return m.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		if m.frame.HasFocus() {
 			if handler := m.frame.InputHandler(); handler != nil {
