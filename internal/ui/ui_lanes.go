@@ -273,22 +273,26 @@ func (l *Lanes) CmdLanesCmds() {
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			switch buttonLabel {
 			case "Sort Tasks":
-				l.pages.HidePage("laneDialog")
+				l.hideDialog("laneDialog")
 				l.CmdSortDialog()
 				return
 			case "Color":
+				l.hideDialog("laneDialog")
 				l.laneColorCommand(initActiveLane)
 				return
 			case "Rename":
+				l.hideDialog("laneDialog")
 				l.renameLaneCommand(initActiveLane)
 				return
 			case "Add to left":
 				addToLeft = true
 				fallthrough
 			case "Add to right":
+				l.hideDialog("laneDialog")
 				l.addLaneLeftRightCommand(addToLeft, initActiveLane)
 				return
 			case "Merge/Remove":
+				l.hideDialog("laneDialog")
 				l.removeMergeLaneDialog(initActiveLane)
 				return
 			case "Cancel":
@@ -297,33 +301,38 @@ func (l *Lanes) CmdLanesCmds() {
 				// l.nextMode = buttonLabel
 				// l.app.Stop()
 			}
-			l.pages.HidePage("laneDialog")
+			l.hideDialog("laneDialog")
 			l.setActiveIndex(initActiveLane)
 		})
 
 	lanePage.SetFocus(0)
 	l.pages.AddPage("laneDialog", lanePage, false, true)
+	l.dialogActive = true
+	l.activeDialog = nil
+	l.pages.ShowPage("laneDialog")
+	l.app.SetFocus(lanePage)
 }
 
 func (l *Lanes) renameLaneCommand(initActiveLane int) {
 	addLaneDialog := NewModalInputLane("Rename Lane", "", 7, l.GetActiveLaneName())
 
 	addLaneDialog.SetDoneFunc(func(lane, _ string, success bool) {
-		l.pages.HidePage("addLane")
+		l.hideDialog("addLane")
 		l.setActiveIndex(initActiveLane)
 		l.content.SetLaneTitle(initActiveLane, lane)
 		l.content.Save()
 		l.RedrawAllLanes()
 	})
 
-	l.pages.HidePage("laneDialog")
+	l.hideDialog("laneDialog")
 	l.pages.AddPage("addLane", addLaneDialog, false, true)
+	l.showDialog("addLane", addLaneDialog)
 }
 
 func (l *Lanes) laneColorCommand(initActiveLane int) {
 	colorDlg := NewColorModal("Lane Color", l.content.GetLaneColor(l.active))
 	colorDlg.SetDoneFunc(func(color string, success bool) {
-		l.pages.HidePage("laneColor")
+		l.hideDialog("laneColor")
 		l.setActiveIndex(initActiveLane)
 		if success {
 			l.content.SetLaneColor(initActiveLane, color)
@@ -332,7 +341,7 @@ func (l *Lanes) laneColorCommand(initActiveLane int) {
 		}
 	})
 
-	l.pages.HidePage("laneDialog")
+	l.hideDialog("laneDialog")
 	l.pages.AddPage("laneColor", colorDlg, false, true)
 	l.showDialog("laneColor", colorDlg)
 }
@@ -355,12 +364,13 @@ func (l *Lanes) addLaneLeftRightCommand(addToLeft bool, initActiveLane int) {
 			l.nextLaneFocus = laneIndex
 			l.app.Stop()
 		}
-		l.pages.HidePage("addLane")
+		l.hideDialog("addLane")
 		l.setActiveIndex(initActiveLane)
 	})
 
-	l.pages.HidePage("laneDialog")
+	l.hideDialog("laneDialog")
 	l.pages.AddPage("addLane", addLaneDialog, false, true)
+	l.showDialog("addLane", addLaneDialog)
 }
 
 func (l *Lanes) removeMergeLaneDialog(initActiveLane int) {
@@ -391,8 +401,12 @@ func (l *Lanes) removeMergeLaneDialog(initActiveLane int) {
 		l.removeMergeLaneCommand(buttonIndex, buttonLabel, targetLanes, initActiveLane)
 	})
 
-	l.pages.HidePage("laneDialog")
+	l.hideDialog("laneDialog")
 	l.pages.AddPage("removeLane", removeLaneDialog, false, true)
+	l.dialogActive = true
+	l.activeDialog = nil
+	l.pages.ShowPage("removeLane")
+	l.app.SetFocus(removeLaneDialog)
 }
 
 func (l *Lanes) removeMergeLaneCommand(buttonIndex int, buttonLabel string, targetLanes []string, initActiveLane int) {
@@ -438,6 +452,6 @@ func (l *Lanes) removeMergeLaneCommand(buttonIndex int, buttonLabel string, targ
 		return
 	}
 
-	l.pages.HidePage("removeLane")
+	l.hideDialog("removeLane")
 	l.setActiveIndex(initActiveLane)
 }

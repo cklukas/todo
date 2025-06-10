@@ -56,7 +56,7 @@ func (m *ModalInput) updateOKButton() {
 func NewModalInput(title string) *ModalInput {
 	form := tview.NewForm()
 
-	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, color: "", showColor: false, colors: []string{"default", "blue", "green", "red", "yellow"}, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
+	m := &ModalInput{Form: form, DialogHeight: 9, frame: tview.NewFrame(form), main: "", secondary: "", due: "", priority: 2, showPriority: false, showDue: false, color: "", showColor: false, colors: []string{"default", "blue", "green", "red", "yellow", "white", "darkcyan", "black", "darkmagenta"}, createdBy: "", created: "", updatedBy: "", updated: "", titleField: nil, okButton: nil, done: nil}
 
 	form.SetCancelFunc(func() {
 		if m.done != nil {
