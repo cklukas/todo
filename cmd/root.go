@@ -99,7 +99,7 @@ func main(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
+func getStatusBar(lanes *ui.Lanes, mode string) (*tview.Flex, *tview.TextView) {
 	bAbout := tview.NewButton("[brown::-]F1 [black::-]About")
 	bAbout.SetBackgroundColor(tcell.ColorLightGray)
 	bAbout.SetSelectedFunc(lanes.CmdAbout)
@@ -140,6 +140,10 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 	bMoveHelp.SetBackgroundColor(tcell.ColorLightGray)
 	lanes.SetMoveHelpButton(bMoveHelp)
 
+	clockView := tview.NewTextView()
+	clockView.SetBackgroundColor(tcell.ColorLightGray)
+	clockView.SetTextAlign(tview.AlignRight)
+
 	defaultStatusBarMenuItems := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(bAbout, 10, 1, false).
 		AddItem(bAddToDo, 13, 1, false).
@@ -150,11 +154,11 @@ func getStatusBar(lanes *ui.Lanes, mode string) *tview.Flex {
 		AddItem(bLanesCommands, 9, 1, false).
 		AddItem(bExit, 10, 1, false).
 		AddItem(bMode, 2+len(mode), 1, false).
-		AddItem(bMoveHelp, 38, 1, false)
+		AddItem(bMoveHelp, 38, 1, false).
+		AddItem(clockView, 20, 1, false)
 
 	defaultStatusBarMenuItems.SetBackgroundColor(tcell.ColorLightGray)
-
-	return defaultStatusBarMenuItems
+	return defaultStatusBarMenuItems, clockView
 }
 
 func JsonWatcher(watcher *fsnotify.Watcher, content *model.ToDoContent, lanes *ui.Lanes, app *tview.Application) {
@@ -249,13 +253,14 @@ func launchGui(todoDir, todoDirModes, mode string, nextModeLaneFocus int) (strin
 		}
 	}
 
-	defaultStatusBarMenuItems := getStatusBar(lanes, mode)
+	defaultStatusBarMenuItems, clockView := getStatusBar(lanes, mode)
 
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(lanes.GetUi(), 0, 1, true).
 		AddItem(defaultStatusBarMenuItems, 1, 1, false)
 	app.SetRoot(layout, true).EnableMouse(true)
+	ui.StartClock(app, clockView, lanes, mode)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

@@ -216,6 +216,13 @@ func (l *Lanes) SetMoveHelpButton(b *tview.Button) {
 	l.bMoveHelp = b
 }
 
+func (l *Lanes) MoveHelpLength() int {
+	if l.bMoveHelp == nil {
+		return 0
+	}
+	return len(util.RemovePrefix(l.bMoveHelp.GetLabel()))
+}
+
 func (l *Lanes) Lists() []*tview.List {
 	return l.lanes
 }
