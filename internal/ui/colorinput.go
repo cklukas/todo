@@ -8,14 +8,15 @@ import (
 // ColorInput is a form item that combines an input field with a color drop-down.
 type ColorInput struct {
 	*tview.Flex
-	input    *tview.InputField
-	dropdown *tview.DropDown
-	colors   []string
+	input     *tview.InputField
+	dropdown  *tview.DropDown
+	colors    []string
+	laneColor string
 }
 
 // NewColorInput creates a new ColorInput. colors is a slice of color names. The
 // first entry should be "default".
-func NewColorInput(label string, colors []string) *ColorInput {
+func NewColorInput(label, laneColor string, colors []string) *ColorInput {
 	input := tview.NewInputField().SetLabel(label)
 	dd := tview.NewDropDown()
 	dd.SetLabel("")
@@ -24,14 +25,18 @@ func NewColorInput(label string, colors []string) *ColorInput {
 		if i == 0 || c == "" {
 			disp[i] = "default"
 		} else {
-			disp[i] = "[" + c + "]" + c
+			if laneColor != "" {
+				disp[i] = "[" + c + ":" + laneColor + "]" + c
+			} else {
+				disp[i] = "[" + c + "]" + c
+			}
 		}
 	}
 	dd.SetOptions(disp, nil)
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
 	flex.AddItem(input, 0, 4, true)
 	flex.AddItem(dd, 0, 1, false)
-	return &ColorInput{flex, input, dd, colors}
+	return &ColorInput{flex, input, dd, colors, laneColor}
 }
 
 // GetLabel returns the item's label text.
