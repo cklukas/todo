@@ -1,5 +1,10 @@
 #!/bin/bash
-VERSION="1.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ID}"
+if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+    VERSION="${GITHUB_REF#refs/tags/}"
+    VERSION="${VERSION#v}"
+else
+    VERSION="1.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ID}"
+fi
 echo "Build command line tool with version $VERSION"
 rm -f ./todo ./todo.exe ./todo_linux ./todo_linux_amd64 ./todo_linux_arm64 ./todo_mac_arm64
 go mod tidy
